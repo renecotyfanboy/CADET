@@ -19,7 +19,7 @@ The pipeline was developed as a part of my [Diploma thesis](pdfs/diploma_thesis.
 ## Usage
 
 The architecture of the network was implented using the functional API of *Keras*.
-The individual network architectures with trained weights were stored in the HDF5 format (compatible with *Keras*) into files *CADET_size.h5" and "CADET_search.h5". The models can be simply loaded using the `load_model` *Keras* function.
+The individual network architectures with trained weights were stored in the HDF5 format (compatible with *Keras*) into files *CADET_size.h5* and *CADET_search.h5*. The models can be simply loaded using the `load_model` *Keras* function.
 
 ```python
 from keras.models import load_model
@@ -30,3 +30,6 @@ model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})
 y_pred = model.fit(X)
 ```
 
+## Example
+
+![](figures/predictions.png)
