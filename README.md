@@ -18,11 +18,12 @@ The pipeline was developed as a part of my [Diploma thesis](pdfs/diploma_thesis.
 
 ## Usage
 
+Both the *CADET_search* and *CADET_size* are composed as selfstanding scripts. Discrimination threshold for the *CADET_search* pipeline was set 0.9 to supress false positive detections, while the threshold of the *CADET_size* pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
 
 
 ### Convolutional part
 
-The convolutional part can be used separately to produce a pixel-wise predictions. The architecture of the convolutional network was implented using the functional *Keras* API. The architectures of individual network with trained weights were stored in the HDF5 format (compatible with *Keras*) into files *CADET_size.h5* and *CADET_search.h5*. The models can be simply loaded using the `load_model` *Keras* function.
+The convolutional part can be used separately to produce a pixel-wise prediction. The architecture of the convolutional network was implented using the functional *Keras* API. The architectures of individual network with trained weights were therefore stored in the HDF5 format (compatible with *Keras*) into files *CADET_size.h5* and *CADET_search.h5*. The models can be simply loaded using the `load_model` *Keras* function.
 
 ```python
 from keras.models import load_model
@@ -33,7 +34,7 @@ model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})
 y_pred = model.fit(X)
 ```
 
-The network inputs $128x128$ images. However, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or `X.reshape(len(X), 128, 128, 1)` for multiple images.
+The network inputs 128x128 images. However, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(len(X), 128, 128, 1)` for multiple images.
 
 ## Example
 
