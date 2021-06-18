@@ -24,7 +24,7 @@ Both the *CADET_search* and *CADET_size* pipelines are composed as selfstanding 
 
 ### Convolutional part
 
-The convolutional part can be used separately to produce pixel-wise predictions. The architecture of the convolutional network was implemented using the functional *Keras* API. The architectures of individual networks together with trained weights could have therefore been stored in the HDF5 format into files *CADET_size.h5* and *CADET_search.h5*. The trained models can be simply loaded using the `load_model` *Keras* function.
+The convolutional part can be used separately to produce pixel-wise predictions. Since the architecture of the convolutional network was implemented using the functional *Keras* API, the architectures together with trained weights could have been stored in the HDF5 format (*CADET_size.h5*, *CADET_search.h5*). The trained models can be simply loaded using the `load_model` *Keras* function.
 
 ```python
 from keras.models import load_model
