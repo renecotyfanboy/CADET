@@ -252,7 +252,7 @@ class beta_model:
         else:
             save("{0}/{1}_mask".format(direct, i), where(self.mask > 0, 1, 0))
     
-    def plot_profile(self, N_anuli):
+    def plot_profile(self):
         plt.plot(self.azim_averaged(self.image))
         plt.xscale("log"); plt.yscale("log")
         plt.tick_params(axis='x',which='both',bottom=False,labelbottom=False)
