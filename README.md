@@ -1,10 +1,6 @@
-<style>
-p {text-align: justify;}
-</style>
-
 <h1> <em>CAvity DEtection Tool</em> (CADET) </h1>
 
-<p>CADET is a machine learning pipeline trained for identifying surface brightness depressions (so-called X-ray cavities) on noisy <em>Chandra</em> images of elliptical galaxies. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions, which are afterwards decomposed into individual cavities using a clustering algorithm (DBSCAN).</p>
+<p style="text-align: justify;">CADET is a machine learning pipeline trained for identifying surface brightness depressions (so-called X-ray cavities) on noisy <em>Chandra</em> images of elliptical galaxies. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions, which are afterwards decomposed into individual cavities using a clustering algorithm (DBSCAN).</p>
 
 <p>The pipeline was developed as a part of my <a href="https://is.muni.cz/th/x68od/?lang=en">Diploma thesis</a> (<a href=pdfs/diploma_thesis.pdf>pdf</a>) to improve the automation and accuracy of the detection and size-estimation of X-ray cavities. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an inception layer, and it was inspired by <a href="https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract">Fort et al. 2017</a> and <a href="https://is.muni.cz/th/rnxoz/?fakulta=1411">Secká 2019</a>. The utilized clustering algorithm is the <em>Sklearn</em> implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, <a href="https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220">Ester et al. 1996</a>).</p>
 
