@@ -70,7 +70,7 @@ def func(i):
 def generator(n_cores=1):
     a = time.time()
     
-    # # FOR DEBUGGING
+    # FOR DEBUGGING
     #for i in nums:
     #    func(i)
 

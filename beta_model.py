@@ -6,6 +6,7 @@ from astropy.convolution import Gaussian2DKernel as Gauss
 from astropy.convolution import convolve
 from astropy.nddata import CCDData
 
+
 class beta_model:
     def __init__(self, size, res, r0, ampl, beta, ampl2, r02, beta2,\
                  ellip, phi, axes, sloshing, point_source):
