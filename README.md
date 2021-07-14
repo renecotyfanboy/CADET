@@ -22,7 +22,6 @@ The networks were trained using the *ADaptive Moment Estimation* (ADAM) optimize
 
 libraries required for using the CADET pipeline:\
 `astropy`\
-`ccdproc`\
 `keras`\
 `matplotlib`\
 `numpy`\
@@ -78,7 +77,9 @@ The network inputs 128x128 images. However, to maintain the compatibility with *
 
 Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
 
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zQEdPtZzCPH11rRQABCWEqBa1d7c3meE?usp=sharing)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example.ipynb)
+
+
 
 ![](example/decomposed/NGC4696_CADET_size.png)
 ![](example/decomposed/NGC4778_CADET_size.png)
