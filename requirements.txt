@@ -1,8 +1,8 @@
 numpy
 scipy
 astropy
-keras
+keras==2.4.3
 matplotlib
 sklearn
 pandas
-tensorflow
+tensorflow==2.4.1
