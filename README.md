@@ -77,9 +77,7 @@ The network inputs 128x128 images. However, to maintain the compatibility with *
 
 Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
 
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example.ipynb)
-
-
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example.ipynb) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tomasplsek/CADET/HEAD?filepath=CADET_example.ipynb)
 
 ![](example/decomposed/NGC4696_CADET_size.png)
 ![](example/decomposed/NGC4778_CADET_size.png)

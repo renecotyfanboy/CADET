@@ -4,3 +4,4 @@ astropy
 keras
 matplotlib
 sklearn
+pandas
