@@ -21,10 +21,10 @@ body {
 
 main {
   margin: auto;
-  width: 800px;
+  width: 750px;
   background-color:white;
   border-radius: 15px;
-  text-align: right;
+  /* text-align: right; */
 }
 
 img {
@@ -34,19 +34,12 @@ img {
   width: 95%;
 }
 
-#icon {
-    display: left;
-    /* margin-left: 0px; */
-    /* margin-right: 0px; */
-    width: 80px;
-}
-
 code {
-    font-family: Consolas,"courier new";
+    /* font-family: Consolas,"courier new"; */
     color: crimson;
-    background-color: white;
-    padding: 3px;
-    font-size: 105%;
+    background-color: rgba(97, 97, 97, 0.075);
+    /* padding: 3px; */
+    font-size: 100%;
   }
 
 address {
@@ -58,12 +51,13 @@ button {
 }
 
 li {
-    padding-bottom: 4px;
+  color: "black";
+  padding-bottom: 4px;
 }
 
 h1 {
   color:rgb(39, 120, 207);
-  font-size: 180%;
+  font-size: 230%;
 }
 
 h2 {
@@ -79,17 +73,15 @@ h4 {
 }
 
 p {
+  text-indent: 0px;
   color:black;
   font-size:120%;
-  text-align: justify;
+  /* text-align: justify; */
   /* margin-right: 20px; */
   /* margin-left: 20px; */
 }
 
 section {
-  color:black;
-  font-size:110%;
-  text-align: justify;
   margin-right: 20px;
   margin-left: 20px;
 }
@@ -102,6 +94,17 @@ section {
 #minusbr{
   display: block;
   margin: -3px 0;
+}
+
+.column {
+    float: left;
+}
+  
+  /* Clearfix (clear floats) */
+.row::after {
+    content: "";
+    clear: both;
+    display: table;
 }
 
 hr {

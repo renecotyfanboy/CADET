@@ -15,13 +15,17 @@
 <main>
 
 <section>
+
+<h1>Overview</h1>
+
 <p>
 CADET is a machine learning pipeline trained for identifying surface 
 brightness depressions (so-called <em>X-ray cavities</em>) on noisy <em>Chandra</em> 
 images of elliptical galaxies. The pipeline consists of a convolutional 
 neural network trained for producing pixel-wise cavity predictions, 
 which are afterwards decomposed into individual cavities using a DBSCAN 
-clustering algorithm.</p>
+clustering algorithm.
+</p>
 
 <p>
 The pipeline was developed as a part of my 
@@ -43,7 +47,8 @@ Density-Based Spatial Clustering of Applications with Noise (DBSCAN,
 
 <br>
 
-<p>The convolutional neural network was trained on artificial images which were 
+<p>
+The convolutional neural network was trained on artificial images which were 
 produced from generated 3D beta models 
 (<a href="https://ui.adsabs.harvard.edu/abs/1978A%26A....70..677C/abstract">Cavaliere et al. 1978</a>) 
 into which we randomly inserted ellipsoidal cavities. The parameter ranges and 
@@ -55,7 +60,8 @@ bright rims around cavities and also antisymmetric spiral perturbations resembli
 sloshing (see image below) to imitate the gas distribution of real galaxies. The produced models were summed 
 into 2D images a noised using Poisson statistics to resemble real <em>Chandra</em>-like images. 
 The corresponding labels were produced similarly by summing the ellipsoidal cavity masks 
-into 2D images and binning them to contain either ones (inside the cavity) and zeros (outside of it).</p>
+into 2D images and binning them to contain either ones (inside the cavity) and zeros (outside of it).
+</p>
 
 <br>
 
@@ -63,7 +69,8 @@ into 2D images and binning them to contain either ones (inside the cavity) and z
 
 <br>
 
-<p>We have trained two separate networks using different sets of artificial images:
+<p>
+We have trained two separate networks using different sets of artificial images:
 one purely with galaxies containing cavities (<b><em>CADET_size</em></b>) and the second with
 50 percent of galaxies lacking any cavities (<b><em>CADET_search</em></b>). The first network
 was further optimized for the proper estimation of cavity sizes, while the second network
@@ -81,7 +88,8 @@ The networks were trained using the <em>ADaptive Moment Estimation</em> (ADAM) o
 and the minimized loss function was the pixel-wise <b><em>binary cross-entropy</em></b>. 
 The pipelines were trained for 5 epochs with 8 images per batch while using all of 
 the training images in each epoch. The training was performed using an NVIDIA GPU 
-type GeForce RTX 2080 SUPER (8 GiB) and lasted approximately 6 hours for both pipelines.</p>
+type GeForce RTX 2080 SUPER (8 GiB) and lasted approximately 6 hours for both pipelines.
+</p>
 
 <br>
 
@@ -89,7 +97,7 @@ type GeForce RTX 2080 SUPER (8 GiB) and lasted approximately 6 hours for both pi
 
 <br>
 
-<h2>Requirements</h2>
+<h1>Requirements</h1>
 
 libraries required for using the CADET pipeline:<br>
 <code>astropy</code><br>
@@ -106,7 +114,7 @@ additional libraries for data generation:<br>
 
 <hr>
 
-<h2>Usage</h2>
+<h1>Usage</h1>
 
 <p>The CADET pipeline inputs either raw <em>Chandra</em> images with units of counts 
 (numbers of captured photons) or normalized processed background-subtracted 
@@ -153,46 +161,51 @@ format for further use (e.g. cavity energy calculation).</p>
 
 <br>
 
-<h3>Convolutional part</h3>
+<h2>Convolutional part</h2>
 
+<p>
 The convolutional part can be used separately to produce raw pixel-wise predictions. 
 Since the architecture of the convolutional network was implemented using the 
 functional *Keras* API, the architectures together with trained weights could 
 have been stored in the HDF5 format (<em>CADET_size.h5</em>, <em>CADET_search.h5</em>). 
 The trained models can be simply loaded using the <code>load_model</code> <em>Keras</em> function.
 
+<br><br>
+<code>
+from keras.models import load_model<br>
+from keras.layers import LeakyReLU<br>
 <br>
-
-```python
-from keras.models import load_model
-from keras.layers import LeakyReLU
-
-model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})
-
+model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})<br>
+<br>
 y_pred = model.predict(X)
-```
-<br>
-The network inputs 128x128 images. However, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(len(X), 128, 128, 1)` for multiple images.
+</code>
+<br><br>
+
+The network inputs 128x128 images. However, to maintain the compatibility with <em>Keras</em>, 
+the input needs to be reshaped as <code>X.reshape(1, 128, 128, 1)</code> for single image or as 
+<code>X.reshape(len(X), 128, 128, 1)</code> for multiple images.
+</p>
 
 <br>
 
 <hr>
 
-<h2>Example</h2>
+<h1>Example</h1>
 
+<p>
 Here we present an example of the pipeline being used on real <em>Chandra</em> images of giant elliptical galaxies.
+</p>
 
-<br><br>
 <!-- [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tomasplsek/CADET/HEAD?filepath=CADET_example_binder.ipynb) -->
 
 <div class="row">
     <div class="column">
         <a href="https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb">
-        <img src="https://colab.research.google.com/assets/colab-badge.svg" title="Open in Google Colab" id="icon"></a> 
+        <img src="https://colab.research.google.com/assets/colab-badge.svg" title="Open in Google Colab" style="width: 110px; padding-right: 5px;"></a> 
     </div>
     <div class="column">
         <a href="https://mybinder.org/v2/gh/tomasplsek/CADET/HEAD?filepath=CADET_example_binder.ipynb">
-        <img src="https://mybinder.org/badge_logo.svg" title="Open in Binder" id="icon"></a>    
+        <img src="https://mybinder.org/badge_logo.svg" title="Open in Binder" style="width: 102px;"></a>    
     </div>
 </div>
 
@@ -202,8 +215,9 @@ Here we present an example of the pipeline being used on real <em>Chandra</em> i
 
 <hr>
 
-<h2>Todo</h2>
+<h1>Todo</h1>
 
+<p>
 The following improvements for the data generation and training processes 
 are currently planned:
 
@@ -215,6 +229,7 @@ are currently planned:
 <li>examine various other CNN architectures</li>
 <li>restrict the cavity predictions using output regularization</li>
 </ul> 
+</p>
 
 </section>
 
