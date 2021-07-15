@@ -1,0 +1,95 @@
+header {
+  color:white;
+  font-family: arial, sans-serif;
+  font-size: 300%;
+  text-align: center;
+  margin: auto;
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+body {
+  width: 1100px;
+  margin: auto;
+  background-image: url('millennium.jpg');
+  background-color:gray;
+  padding: 5px;
+  font-family: arial, sans-serif
+}
+
+main {
+  background-color:rgba(138, 138, 138, 0.55);
+  border-radius: 15px;
+  text-align: right;
+}
+
+div {
+  float: right;
+  text-align: right;
+}
+
+address {
+  font-style: normal;
+}
+
+button {
+  padding: 0px;
+}
+
+h1 {
+  color:white;
+  font-size: 180%;
+}
+
+h2 {
+  color:white;
+}
+
+h3 {
+  color:white;
+}
+
+h4 {
+  color:white;
+}
+
+p {
+  color:white;
+  font-size:110%;
+  text-align: justify;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+section {
+  color:white;
+  font-size:110%;
+  text-align: justify;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+#shortbr{
+  display: block;
+  margin: 5px 0;
+}
+
+#minusbr{
+  display: block;
+  margin: -3px 0;
+}
+
+hr {
+  color:white;
+  border-style:inset;
+  border-width:1px;
+  width:100%
+}
+
+a:link, a:visited {
+  color:yellow
+}
+
+a:hover {
+  color:red
+}
