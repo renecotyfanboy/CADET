@@ -1,5 +1,6 @@
 header {
   color:white;
+  background-color:rgb(39, 120, 207);
   font-family: arial, sans-serif;
   font-size: 300%;
   text-align: center;
@@ -11,13 +12,13 @@ header {
 body {
   width: 1100px;
   margin: auto;
-  background-color:gray;
+  background-color:white;
   padding: 5px;
   font-family: arial, sans-serif
 }
 
 main {
-  background-color:rgba(138, 138, 138, 0.55);
+  background-color:white;
   border-radius: 15px;
   text-align: right;
 }
@@ -36,24 +37,24 @@ button {
 }
 
 h1 {
-  color:white;
+  color:rgb(39, 120, 207);
   font-size: 180%;
 }
 
 h2 {
-  color:white;
+  color:rgb(39, 120, 207);
 }
 
 h3 {
-  color:white;
+  color:rgb(39, 120, 207);
 }
 
 h4 {
-  color:white;
+  color:rgb(39, 120, 207);
 }
 
 p {
-  color:white;
+  color:black;
   font-size:110%;
   text-align: justify;
   margin-right: 20px;
@@ -61,7 +62,7 @@ p {
 }
 
 section {
-  color:white;
+  color:black;
   font-size:110%;
   text-align: justify;
   margin-right: 20px;
@@ -90,5 +91,5 @@ a:link, a:visited {
 }
 
 a:hover {
-  color:red
+  color:rgb(233, 88, 37)
 }

@@ -29,12 +29,13 @@ main {
 <header><em>Cavity Detection Tool</em> (CADET)</header>
 <br>
 
+<section>
 <p>CADET is a machine learning pipeline trained for identifying surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of elliptical galaxies. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions, which are afterwards decomposed into individual cavities using a DBSCAN clustering algorithm.
 The pipeline was developed as a part of my <a href="https://is.muni.cz/th/x68od/?lang=en">Diploma thesis</a>) (<a href="/pdfs/diploma_thesis.pdf">pdf</a>) to improve the automation and accuracy of the detection and size-estimation of X-ray cavities. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an inception layer, and it's development was inspired by <a href="https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract">Fort et al. 2017</a> and <a href="https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411">Secká 2019</a>. The utilized clustering algorithm is the *Sklearn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, <a href="https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220">Ester et al. 1996</a>).</p>
 
 <br>
 
-<img src="architecture.png" title="Architecture of the CADET pipeline" width="500px">
+<img src="https://github.com/tomasplsek/CADET/blob/main/figures/architecture.png" title="Architecture of the CADET pipeline" width="500px">
 
 <br>
 
@@ -44,7 +45,7 @@ produced from generated 3D beta models
 into which we randomly inserted ellipsoidal cavities. The parameter ranges and 
 distributions used for generating models of galaxies and X-ray cavities were 
 estimated from the measurements of nearby galaxies (for more info see the 
-<a href="/pdfs/diploma_thesis.pdf">Diploma thesis</a>). Besides the cavities, we added also 
+<a href="https://github.com/tomasplsek/CADET/blob/main/pdfs/diploma_thesis.pdf">Diploma thesis</a>). Besides the cavities, we added also 
 other typical features such as central point sources, bright rims around cavities 
 and also antisymmetric spiral perturbations resembling gas sloshing (see image below) 
 to imitate the gas distribution of real galaxies. The produced models were summed 
@@ -54,7 +55,7 @@ into 2D images and binning them to contain either ones (inside the cavity) and z
 
 <br>
 
-<img src="artificial.png" title="Artificial data" width="500px">
+<img src="https://github.com/tomasplsek/CADET/blob/main/figures/artificial.png" title="Artificial data" width="500px">
 
 <br>
 
@@ -116,7 +117,7 @@ Both the <b><em>CADET_search</em>></b> and <b><em>CADET_size</em></b> pipelines
 are composed as self-standing scripts. Discrimination threshold for the <b><em>CADET_search</em></b> 
 pipeline was set to 0.9 to suppress false positive detections, while the threshold of the 
 <b><em>CADET_size</em></b> pipeline was set to 0.55 so the predicted volumes are not underestimated 
-nor overestimated (for more info see the <a href="/pdfs/diploma_thesis.pdf">Diploma thesis</a>). 
+nor overestimated (for more info see the <a href="https://github.com/tomasplsek/CADET/blob/main/pdfs/diploma_thesis.pdf">Diploma thesis</a>). 
 However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
 The scripts can be run by simply calling (possibly with a threshold parameter - float from 0 to 1):
 
@@ -195,6 +196,8 @@ The following improvements for the data generation and training processes are cu
 - [ ] improve existing features (birght rims, gas sloshing)
 - [ ] examine various other CNN architectures
 - [ ] restrict the cavity predictions using output regularization
+
+</section>
 
 </main>
 
