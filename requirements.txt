@@ -6,3 +6,4 @@ matplotlib
 sklearn
 pandas
 tensorflow==2.4.1
+plotly
