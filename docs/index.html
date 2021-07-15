@@ -7,7 +7,8 @@
 
 <body>
 <link rel="stylesheet" href="styles.css">
-</body>
+
+<main>
 
 <h1><em>Cavity Detection Tool</em> (CADET)</h1>
 
@@ -46,9 +47,7 @@ additional libraries for data generation:\
 <h2>Usage</h2>
 
 The CADET pipeline inputs either raw *Chandra* images with units of counts (numbers of captured photons) or normalized processed background-subtracted and/or exposure-corrected images. When using flux images for instance, try normalizing them by the lowest pixel value so all pixel values are higher than or equal to unity. The input image is afterwards automatically scaled by a logarithm and normalized by the highest pixel value. Currently only 128x128 images are supported, however, an improvement that would enable arbitrarily sized images is under development (so-far the images were cropped and re-binned via ciao_contrib (CIAO 4.13), however, an Astropy version is being developed).
-
-Both the ***CADET_search*** and ***CADET_size*** pipelines are composed as selfstanding scripts. Discrimination threshold for the ***CADET_search*** pipeline was set to 0.9 to supress false positive detections, while the threshold of the ***CADET_size*** pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
-
+Both the <em><b>CADET_search</b></em> and <b><em>CADET_size</b></em> pipelines are composed as self-standing scripts. Discrimination threshold for the ***CADET_search*** pipeline was set to 0.9 to supress false positive detections, while the threshold of the ***CADET_size*** pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
 The scripts can be run by simply calling (possibly with a threshold parameter - float from 0 to 1):
 
 ```console
@@ -65,7 +64,7 @@ which uses all `.fits` files in the corresponding folder (`foldername`) and save
 
 The volumes of X-ray cavities are calculated under the assumption of a symmetry along the direction from the galactic centre into the centre of the cavity (*center of mass*). The cavity depth in each point along that direction is assumed to be equal to its width. Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation)
 
-### Convolutional part
+<h3>Convolutional part</h3>
 
 The convolutional part can be used separately to produce raw pixel-wise predictions. Since the architecture of the convolutional network was implemented using the functional *Keras* API, the architectures together with trained weights could have been stored in the HDF5 format (*CADET_size.h5*, *CADET_search.h5*). The trained models can be simply loaded using the `load_model` *Keras* function.
 
@@ -82,7 +81,7 @@ The network inputs 128x128 images. However, to maintain the compatibility with *
 
 <hr>
 
-## Example
+<h2>Example</h2>
 
 Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
 
@@ -94,7 +93,7 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 
 <hr>
 
-## Todo
+<h2>Todo</h2>
 
 The following improvements for the data generation and training processes are currently planned:
 
@@ -104,3 +103,7 @@ The following improvements for the data generation and training processes are cu
 - [ ] improve existing features (birght rims, gas sloshing)
 - [ ] examine various other CNN architectures
 - [ ] restrict the cavity predictions using output regularization
+
+</main>
+
+</body>
