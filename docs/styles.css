@@ -121,3 +121,37 @@ a:link, a:visited {
 a:hover {
   color:red
 }
+
+#menu {
+  color: white;
+  text-decoration: none;
+}
+
+ul {
+  list-style-type: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  background-color: rgb(39, 120, 207);
+}
+
+li {
+  font-size: 140%;
+  /* border: solid 1px black; */
+  float: left;
+}
+
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 16px;
+  padding-bottom: 10px;
+  text-decoration: none;
+}
+
+li a:hover {
+  background-color: rgba(250, 250, 250, 0.3);
+}
