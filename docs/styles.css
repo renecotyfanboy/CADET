@@ -57,7 +57,7 @@ li {
 
 h1 {
   color:rgb(39, 120, 207);
-  font-size: 230%;
+  font-size: 260%;
 }
 
 h2 {
@@ -127,9 +127,8 @@ a:hover {
   width: 160px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; /* Stay on top */
-  top: 0; /* Stay at the top */
-  left: 0;
-  background-color: #111; /* Black */
+  top: 50%; /* Stay at the top */
+  left: 100px;
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 20px;
 }
