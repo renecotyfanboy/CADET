@@ -2,13 +2,13 @@ header {
   color:white;
   background-color:rgb(39, 120, 207);
   font-family: arial, sans-serif;
-  font-size: 300%;
+  font-size: 330%;
   text-align: center;
-  margin-left: 0px;
-  margin-right: 0px;
+  padding-left: 60px;
   padding-top: 40px;
   padding-bottom: 40px;
-  font-weight: bold;
+  font-weight: bolder;
+  border-radius: 13px;
 }
 
 body {
@@ -27,12 +27,21 @@ main {
   /* text-align: right; */
 }
 
-img {
+footer {
+  color: white;
+  padding: 10px;
+  font-size: 140%;
+  text-align: center;
+  background-color: rgb(39, 120, 207);
+  border-radius: 13px;
+}
+
+/* img {
   display: block;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
-}
+} */
 
 code {
     /* font-family: Consolas,"courier new"; */
@@ -123,14 +132,18 @@ a:hover {
 }
 
 .sidenav {
-  height: 100%; /* Full-height: remove this if you want "auto" height */
   width: 160px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; /* Stay on top */
-  top: 50%; /* Stay at the top */
-  left: 100px;
+  top: 22%; /* Stay at the top */
+  left: 11%;
   overflow-x: hidden; /* Disable horizontal scroll */
-  padding-top: 20px;
+  padding-top: 15px;
+  padding-bottom: 10px;
+  padding-right: 30px;
+  padding-left: 10px;
+  border-radius: 11px;
+  background-color: rgba(172, 172, 172, 0.2);
 }
 
 /* The navigation menu links */
@@ -138,11 +151,15 @@ a:hover {
   padding: 6px 8px 6px 16px;
   text-decoration: none;
   font-size: 25px;
-  color: #818181;
+  color: rgb(39, 120, 207);
   display: block;
 }
 
 /* When you mouse over the navigation links, change their color */
 .sidenav a:hover {
-  color: #f1f1f1;
+  color: rgba(39, 120, 207, 0.6);
+}
+
+#menu {
+  padding-bottom: 11px;
 }
