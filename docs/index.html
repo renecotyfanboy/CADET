@@ -12,16 +12,14 @@
 <header><em>Cavity Detection Tool</em> (CADET)</header>
 
 <br style="margin: -20px 0;">
-<img src="figures/CADET.png" style="float: right; width: 260px; padding-right: 20px;">
+<img src="figures/CADET.png" style="float: right; width: 260px; padding-top: 40px; padding-right: 60px;">
 
-<nav>
-<ul>
-<li style="background-color: rgb(20, 97, 179);"><a id="menu" href="index.html">Overview</a></li>
-<li><a id="menu" href="training.html">Training</a></li>
-<li><a id="menu" href="requirements.html">Requirements</a></li>
-<li><a id="menu" href="usage.html">Usage</a></li>
-<li><a id="menu" href="example.html">Example</a></li>
-</ul>
+<nav class="sidenav">
+<a style="background-color: rgb(20, 97, 179);" id="menu" href="index.html">Overview</a>
+<a id="menu" href="training.html">Training</a>
+<a id="menu" href="requirements.html">Requirements</a>
+<a id="menu" href="usage.html">Usage</a>
+<a id="menu" href="example.html">Example</a>
 </nav>
 
 <main>
@@ -208,8 +206,6 @@ the input needs to be reshaped as <code>X.reshape(1, 128, 128, 1)</code> for sin
 Here we present an example of the pipeline being used on real <em>Chandra</em> images of giant elliptical galaxies.
 </p>
 
-<!-- [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tomasplsek/CADET/HEAD?filepath=CADET_example_binder.ipynb) -->
-
 <div class="row">
     <div class="column">
         <a target="_blank" href="https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb">
@@ -227,22 +223,6 @@ Here we present an example of the pipeline being used on real <em>Chandra</em> i
 <img src="figures/NGC5813_CADET_size.png" title="Example of CADET utilization for NGC5813" style="width: 100%;">
 
 <hr>
-
-<h1>Todo</h1>
-
-<p>
-The following improvements for the data generation and training processes 
-are currently planned:
-
-<ul style="list-style-type:circle;">
-<li>speed up the data generation using <em>Tensorflow</em> and GPU</li>
-<li>enable inputting arbitrarily sized images</li>
-<li>add other features (cold fronts, point sources)</li>
-<li>improve existing features (bright rims, gas sloshing)</li>
-<li>examine various other CNN architectures</li>
-<li>restrict the cavity predictions using output regularization</li>
-</ul> 
-</p>
 
 </section>
 
