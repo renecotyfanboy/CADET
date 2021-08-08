@@ -6,8 +6,6 @@ The pipeline was developed as a part of my [Diploma thesis](https://is.muni.cz/t
 
 ![Architecture](figures/architecture.png)
 
----
-
 ## Requirements
 
 libraries required for using the CADET pipeline:\
@@ -22,8 +20,6 @@ libraries required for using the CADET pipeline:\
 
 additional libraries for data generation:\
 `concurrent`
-
----
 
 ## Usage
 
@@ -62,8 +58,6 @@ y_pred = model.predict(X)
 
 The network inputs 128x128 images. However, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(len(X), 128, 128, 1)` for multiple images.
 
----
-
 ## Example
 
 Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
@@ -73,8 +67,6 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 ![](example/decomposed/NGC4696_CADET_size.png)
 ![](example/decomposed/NGC4778_CADET_size.png)
 ![](example/decomposed/NGC5813_CADET_size.png)
-
----
 
 ## Todo
 
