@@ -23,19 +23,19 @@ additional libraries for data generation:\
 
 ## Usage
 
-The CADET pipeline inputs either raw *Chandra* images in units of counts (number of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. flux images, normalize them by the lowest pixel value so all pixel values are higher than or equal to 1. Before inference the input image is also automatically scaled by a logarithm and normalized by the highest pixel value. 
+The CADET pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, you should normalize them by the lowest pixel value so all pixel values are higher than or equal to 1. Before passed to the neural network, the input image is also automatically scaled by a logarithm and normalized by the highest pixel value.
 
-Currently only 128x128 images are supported, however, an improvement that would enable arbitrarily sized images is under development (so-far the images were cropped and re-binned via ciao_contrib (CIAO 4.13), however, an Astropy version is being developed).
+Currently only 128x128 images are supported, however, an improvement that would enable arbitrarily sized images is under development (so-far the images were cropped and re-binned using ciao_contrib (CIAO 4.13), however, an Astropy-based version is being developed).
 
-Both the ***CADET_search*** and ***CADET_size*** pipelines are composed as selfstanding scripts. The discrimination threshold for the ***CADET_search*** pipeline was set to 0.9 to suppress false positive detections, while the threshold of the ***CADET_size*** pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
+Both the ***CADET_search*** and ***CADET_size*** pipelines are composed as self-standing scripts. The discrimination threshold for the ***CADET_search*** pipeline was set to 0.9 to suppress false positive detections, while the threshold of the ***CADET_size*** pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
 
-The scripts can be run by simply calling (possibly with a `threshold` parameter - float from 0 to 1):
+The self-standing scripts can be run by simply calling (possibly with a `threshold` parameter - float from 0 to 1):
 
 ```console
 $ python3 CADET_size.py foldername [threshold]
 ```
 
-and
+or
 
 ```console
 $ python3 CADET_search.py foldername [threshold]
@@ -43,11 +43,11 @@ $ python3 CADET_search.py foldername [threshold]
 
 The script loads all the FITS files in the corresponding folder (`foldername`) and saves corresponding raw cavity predictions again into the FITS format while also properly preserving the WCS coordinates. On the output there is also a PNG file showing decomposed cavities and a TXT file containing calculated cavity areas and volumes.
 
-The volumes of X-ray cavities are calculated under the assumption of a symmetry along the galactocentric direction into the centre of the cavity (*center of mass*). The cavity depth in each point along that direction is assumed to be equal to its width. Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation)
+The volumes of X-ray cavities are calculated under the assumption of symmetry along the direction from the galactic centre into the centre of the cavity (calculated as *center of mass*). The cavity depth in each point on that line is assumed to be equal to its width (perpendicular to that line). Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation)
 
 ### Convolutional part
 
-The convolutional part can be used separately to produce raw pixel-wise predictions. Since the architecture of the convolutional network was implemented using the functional *Keras* API, the architectures together with trained weights could have been stored in the HDF5 format (*CADET_size.h5*, *CADET_search.h5*). The trained models can be simply loaded using the `load_model` *Keras* function.
+The convolutional part can be used separately to produce raw pixel-wise predictions. Since the convolutional networks were implemented using the functional *Keras* API, both architectures together with trained weights could have been stored in the HDF5 format (*CADET_size.h5*, *CADET_search.h5*). Fully trained models can be therefore simply loaded using the `load_model` *Keras* function.
 
 ```python
 from keras.models import load_model
