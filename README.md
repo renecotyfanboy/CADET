@@ -55,7 +55,7 @@ The script loads a FITS file specified by `galaxy` argument (`f"{galaxy}.fits"`)
 
 ![](figures/NGC5813.png)
 
-### Convolutional part
+### Convolutional part $\;$ [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
 
 The convolutional part of the pipeline can be used separately to produce raw pixel-wise predictions. Since the convolutional network was implemented using the functional *Keras* API, the architecture together with trained weights could have been stored in the HDF5 format (*CADET.hdf5*). Trained model can be therefore simply loaded using the `load_model` *Keras* function:
 
@@ -106,13 +106,13 @@ $ python3 cavity_significance.py NGC5813 2 [3,5] double
 
 ![](figures/significance.png)
 
-## Example
+<!-- ## Example
 
-Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
+Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies. -->
 
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
+<!-- [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb) -->
 
-![](figures/CADET_size.png)
+<!-- ![](figures/CADET_size.png) -->
 
 ## How to cite
 
