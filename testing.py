@@ -437,7 +437,9 @@ def plot_optimal_threshold_vs_counts(Ae, Ve, TP, FP, TP_counts, FP_counts, thres
 
         TP_threshold = 0.8
         try: TP_optimal.append(float(interp1d(TP, thresholds)(TP_threshold)))
-        except: TP_optimal.append(0.1) 
+        except: 
+            if (TP > np.array(TP_threshold)).all(): TP_optimal.append(0.9)
+            else: TP_optimal.append(0.1)
 
     x_bins  = 10**x_bins
     ax.plot(x_bins, A_optimal, color=f"C1", marker="o", lw=1.3, ls="-", label="area")
@@ -454,6 +456,10 @@ def plot_optimal_threshold_vs_counts(Ae, Ve, TP, FP, TP_counts, FP_counts, thres
 
     ax.set_xlabel("image counts", labelpad=8)
     ax.set_ylabel("optimal threshold", labelpad=8)
+
+    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="minor", length=3, width=1.1)
+    plt.setp(ax.spines.values(), linewidth=1.3)
 
     optimal = V_optimal if name == "volume" else A_optimal
 
@@ -483,8 +489,8 @@ def plot_fprate_vs_discrimination_threshold_by_counts(FP, FP_counts, TP, TP_coun
             TPs.append(sum(tp) / len(tp))
 
         c1, c2 = int(round(c1, -3)), int(round(c2, -3))
-        label_TP = f"{c1}$-${c2} counts" if c2 < bins[-1] else f"TP ($>$ {c1} counts"
-        label_FP = f"{c1}$-${c2} counts" if c2 < bins[-1] else f"FP ($>$ {c1} counts"
+        label_TP = f"{c1}$-${c2} counts" if c2 < bins[-1] else f"$>$ {c1} counts"
+        label_FP = f"{c1}$-${c2} counts" if c2 < bins[-1] else f"$>$ {c1} counts"
 
         ax.plot(thresholds, FPs, ls="--", color=f"C{color}", label=label_FP)
         ax.plot(thresholds, TPs, ls="-", color=f"C{color}", label=label_TP)
@@ -690,7 +696,7 @@ def plot_los_angle(N_angles, N, y_test, y_pred, As, Vs, bins, optimal):
     ax.set_xlim(0, 90)
 
     ax.set_xlabel("angle (degrees)", labelpad=6)
-    ax.set_ylabel("estimated / true", labelpad=6)
+    ax.set_ylabel("predicted / true", labelpad=6)
     ax.tick_params(axis='both', which='major', length=5, width=1.3)
     ax.tick_params(axis='both', which='minor', length=0)
 

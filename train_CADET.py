@@ -3,16 +3,14 @@ import io, os, sys
 import numpy as np
 import jax.numpy as jnp
 from pandas import read_csv
-from astropy.io import fits
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
 
 import pandas as pd
 pd.options.mode.chained_assignment = None
 
 # TENSORFLOW
 import tensorflow as tf
-from tensorflow.config.experimental import list_physical_devices, set_memory_growth, set_virtual_device_configuration, VirtualDeviceConfiguration, list_logical_devices
+from tensorflow.config.experimental import list_physical_devices, set_memory_growth, set_virtual_device_configuration, VirtualDeviceConfiguration
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.losses import BinaryCrossentropy
 from tensorflow.keras.models import load_model
@@ -23,20 +21,18 @@ from tensorboard.plugins.hparams import api as hp
 # GPU initialization
 os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
 gpus = list_physical_devices('GPU')
-set_memory_growth(gpus[0], False)
-set_virtual_device_configuration(gpus[0], [VirtualDeviceConfiguration(memory_limit=3600)])
-logical_gpus = list_logical_devices('GPU')
-print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+set_virtual_device_configuration(gpus[0], [VirtualDeviceConfiguration(memory_limit=5000)])
+print(len(gpus), "Physical GPUs")
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
-os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = '0.48'
+os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = '0.35'
 
 # CUSTOM LIBRARIES
-from beta_model import run_vect
+# from beta_model import run_vect
 from functions import *
 from testing import *
-
+from img_generator import *
 
 #################### PARSING ARGUMENTS ####################
 
@@ -47,14 +43,11 @@ except: data = ""
 try: drop = float(sys.argv[5])
 except: drop = 0.0
 
-if "prelu" in network: active = "prelu"
-elif "relu" in network: active = "relu"
-else: active = "None"
-mpool = True if "maxpool" in network else False
 if "50" in network: cavities = 50
-if "90" in network: cavities = 90
+elif "90" in network: cavities = 90
 elif "100" in network: cavities = 100
 else: cavities = 100
+active = "prelu" if "prelu" in network else "relu"
 
 shape_image = (128, 128, 1)
 
@@ -75,100 +68,9 @@ elif "customunet" in network:
 elif "vanilla" in network: 
     from stannet_vanilla import Stannet
     model = Stannet_vanilla(shape_image)
-else: 
+else:
     from stannet import Stannet
-    model = Stannet(shape_image, active, mpool, drop)
-
-################## DATA READING FUNCTION ##################
- 
-def read_data(x0, batch, suf, params):
-    p = params.loc[x0:x0+batch-1]
-
-    # 50% of the data has no cavities
-    if "50" in suf:
-        true = np.array([False for i in range(batch)])
-        true[::2] = True
-        p["R1"][true] = 0
-        p["R2"][true] = 0
-        p["rim_height"][true] = 0
-
-    # 90% of the data has no cavities
-    if "90" in suf:
-        true = np.array([False for i in range(batch)])
-        true[::10] = True
-        p["R1"][true] = 0
-        p["R2"][true] = 0
-        p["rim_height"][true] = 0
-
-    # turn-off cavity rims
-    if "norims" in suf:
-        p["rim_height"] = 0
-
-    true = np.array([True for i in range(batch)])
-    true[::5] = False
-    p["rim_height"][true] = 0
-
-    # turn-off sloshing
-    if "nosloshing" in suf:
-        p["s_depth"] = 0
-
-    # turn-off changing angle theta
-    if "notheta" in suf:
-        p["theta1"] = 0
-        p["theta2"] = 0
-
-    parnames = ["dx", "dy", "dx_2", "dy_2", "phi", "phi_2",
-                "A", "r0", "beta", "ellip", "A_2", "r0_2", "beta_2", "bkg", 
-                "s_depth", "s_period", "s_dir", "s_angle",
-                "r1", "r2", "varphi1", "varphi2", "theta1", "theta2", 
-                "R1", "R2", "e1", "e2", "phi1", "phi2",
-                "rim_size", "rim_height", "rim_type"]
-
-    # transform arrays into JAX stacks
-    for par in parnames:
-        globals()[par] = jnp.stack(list(p[par]))
-    nums = jnp.stack([i for i in range(x0,x0+batch)])
-
-    X, y, v = run_vect(nums,
-                       dx, dy, dx_2, dy_2, phi, phi_2,
-                       A, r0, beta, ellip, A_2, r0_2, beta_2, bkg, 
-                       s_depth, s_period, s_dir, s_angle,
-                       r1, r2, varphi1, varphi2, theta1, theta2, 
-                       R1, R2, e1, e2, phi1, phi2,
-                       rim_size, rim_height, rim_type)
-
-    # choose weighting
-    if "logweights" in suf:
-        w = 1 / jnp.log10(jnp.sum(X, axis=(1,2)))
-    elif "sqrtweights" in suf:
-        w = 1 / jnp.sqrt(jnp.sum(X, axis=(1,2)))
-    elif "alphaweights" in suf:
-        w = jnp.array(p["beta"])
-    else:
-        w = jnp.ones(batch)
-    
-    # normalize weights
-    if "weights" in suf:
-        w = batch / sum(w) * w
-
-    # scale images by logarithm
-    X = jnp.log10(X+1) #/ jnp.max(jnp.log10(X+1), axis=(1,2)).reshape((batch,1,1))
-
-    X = tf.convert_to_tensor(X.reshape(batch, *shape_image))
-    y = tf.convert_to_tensor(y.reshape(batch, *shape_image))
-    w = tf.convert_to_tensor(w.reshape(batch, 1))
-
-    return X, y, w
-
-# image generator
-def img_generator(batch = 8, suf="", params=[]):
-    x0 = 0
-
-    while True:
-        X, y, w = read_data(x0, batch, suf, params=params)
-        x0 += batch
-        if x0 >= params.shape[0]- 13000: x0 = 0
-        yield (X, y, w)
+    model = Stannet(shape_image, active, drop)
 
 # # TEST ON DATA SAME AS GENERATED
 # params = read_csv(f"simulated_params/sim{data}.csv")
@@ -186,13 +88,14 @@ def img_generator(batch = 8, suf="", params=[]):
 ######################## TRAINING ########################
 
 # basic params
-epochs = 16
+epochs = 4
+n = 7
 lr = float(sys.argv[1])
 batch = int(sys.argv[2])
 images_per_epoch = 6144 * 2
 steps_per_epoch = images_per_epoch // batch
 N_train = images_per_epoch * epochs
-N_test = 8000
+N_test = 4000
 N_test_nocav = 2000
 N_val = 2000
 
@@ -202,6 +105,8 @@ hparams = {"dropout" : drop,
 
 string = f"\nTraining \"{network}\" network with \"{data}\" data."
 string += f"\nLearning rate: {lr}"
+string += f"\nDropout: {drop}"
+string += f"\nFraction of cavities: {cavities}"
 string += f"\nEpochs: {epochs}"
 string += f"\nBatch size: {batch}"
 string += f"\nSteps per epoch: {steps_per_epoch}"
@@ -209,7 +114,6 @@ string += f"\nImages per epoch: {images_per_epoch}"
 string += f"\nTrain data: {N_train}"
 string += f"\nTest data: {N_test}"
 string += f"\nValidation data: {N_val}"
-
 print(string)
 
 # VALIDATION DATA
@@ -224,7 +128,7 @@ betas_nocav = np.array(params_test["beta"])[-2000:]
 # FILENAME AND LOGDIR
 # timestamp = 'CADET_size'
 # timestamp = 'CADET_new'
-timestamp = f'b{batch}_lr{lr}_d{drop}{network}{data}'
+timestamp = f'b{batch}_lr{lr}_d{drop}{network}'
 # timestamp = f'b24_lr0.0008_drop_Stan_normal_new_long'
 
 log_dir = f"logs/{timestamp}"
@@ -237,7 +141,7 @@ with open(f"{log_dir}/info.txt", "w") as f: f.write(string)
 callbacks = [TensorBoard(log_dir=log_dir, update_freq="epoch", write_graph=True),
              ModelCheckpoint(filepath=f"{log_dir}/best.hdf5", save_best_only=True),
              ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6),
-             hp.KerasCallback(log_dir+"/train", hparams)]
+             hp.KerasCallback(log_dir+"/train", hparams, trial_id=timestamp)]
 
 # COMPILE MODEL
 adam_opt = Adam(learning_rate=lr, decay=0)
@@ -249,9 +153,12 @@ with open(f"{log_dir}/{timestamp}.txt", "w") as f:
 plot_model(model, to_file=f"{log_dir}/{timestamp}.png", show_shapes=True) #, rankdir="LR")
 
 # FIT MODEL
+model = load_model(f"{log_dir}/{timestamp}.hdf5")
+
 model.fit(img_generator(batch, network, params=params),
           validation_data=(X_val, y_val),
-          epochs=epochs,
+          epochs=epochs*n,
+          initial_epoch=epochs*(n-1),
           steps_per_epoch=steps_per_epoch,
           callbacks=callbacks, verbose=1)
 
@@ -298,11 +205,11 @@ with file_writer.as_default():
     b = (c_test > 5000) & (betas < 1.5)
     X_test, y_test, y_pred, v_test, c_test, betas = X_test[b], y_test[b], y_pred[b], v_test[b], c_test[b], betas[b]
 
-    # PLOT TEST IMAGES
-    for i in range(10):    
-        fig = plot_testgal_prediction("", X_test[i], y_pred[i], y_test[i], betas[i])
-        fig.savefig(f"{test_dir}/test_{i}.png", bbox_inches='tight')
-        tf.summary.image("6) Testing images", plot_to_image(fig), step=i)
+    # # PLOT TEST IMAGES
+    # for i in range(10):    
+    #     fig = plot_testgal_prediction("", X_test[i], y_pred[i], y_test[i], betas[i])
+    #     fig.savefig(f"{test_dir}/test_{i}.png", bbox_inches='tight')
+    #     tf.summary.image("6) Testing images", plot_to_image(fig), step=i)
 
     # BINARY CROSSENTROPY LOSS FOR TESTING DATA
     score1 = BinaryCrossentropy()(y_test[:N_test//2], y_pred[:N_test//2]).numpy()
@@ -312,7 +219,7 @@ with file_writer.as_default():
 
     # THRESHOLDS
     print("\nCalculating errors for test data with cavities for various thresholds.")
-    skip = 4
+    skip = 1
     thresholds = np.linspace(0.1,0.9,9)
     Ae_th, Ve_th, TP_th = get_threshold_error(y_pred[::skip], y_test[::skip], v_test[::skip], thresholds)
 
@@ -327,11 +234,11 @@ with file_writer.as_default():
     b = (c_test_nocav > 5000) & (betas_nocav < 1.5)
     X_test_nocav, y_pred_nocav, betas_nocav, c_test_nocav = X_test_nocav[b], y_pred_nocav[b], betas_nocav[b], c_test_nocav[b]
 
-    # TEST NOCAV IMAGES
-    for i in range(10):    
-        fig = plot_testgal_prediction("", X_test_nocav[i], y_pred_nocav[i], np.zeros((128,128)), betas_nocav[i])
-        fig.savefig(f"{test_dir}/test_nocav_{i}.png", bbox_inches='tight')
-        tf.summary.image("7) Testing nocav images", plot_to_image(fig), step=i)
+    # # TEST NOCAV IMAGES
+    # for i in range(10):    
+    #     fig = plot_testgal_prediction("", X_test_nocav[i], y_pred_nocav[i], np.zeros((128,128)), betas_nocav[i])
+    #     fig.savefig(f"{test_dir}/test_nocav_{i}.png", bbox_inches='tight')
+    #     tf.summary.image("7) Testing nocav images", plot_to_image(fig), step=i)
 
     # GET FALSE POSITIVE FOR THRESHOLDS
     FP_th = []
@@ -379,7 +286,7 @@ with file_writer.as_default():
     print("\nCalculating errors for test data with cavities.")
     A, Ae, V, Ve, TP = get_error(y_pred, y_test, v_test, c_test, bins, optimal)
 
-    FP_optimal = np.max(np.vstack((optimal, FP_optimal)), axis=0)
+    # FP_optimal = np.max(np.vstack((optimal, FP_optimal)), axis=0)
     FP = get_optimal_false_positives(y_pred_nocav, c_test_nocav, bins, FP_optimal)
 
     # AREA ERROR MATRIX
@@ -399,22 +306,29 @@ with file_writer.as_default():
 
     # SCALARS: ERROR, FP, TP
     error = lambda x: abs(x - 1)*100
-    tf.summary.scalar('test_volume_error', data=np.median(error(Ve[TP == 1])), step=0)
-    tf.summary.scalar('test_TP', data=np.mean(TP), step=0)
-    tf.summary.scalar('test_FP', data=np.mean(FP), step=0)
+    tf.summary.scalar('test_volume_error', data=np.median(error(Ve[TP == 1])), step=n-1)
+    tf.summary.scalar('test_TP', data=np.mean(TP), step=n-1)
+    tf.summary.scalar('test_FP', data=np.mean(FP), step=n-1)
 
 ####################### CUSTOM DATA #######################
 
-with file_writer.as_default():
-    # LINE-OF-SIDE ANGLE
-    print("\nCalculating error vs line-of-side angle")
-    N_angles, N = 10, 50
-    Xs, ys, As, Vs = get_los_angle_error(N_angles=10, N=50, A=1, r0=10, beta=0.5, r=25, R=15)
-    y_pred = model.predict(Xs.reshape(N_angles * N, 128, 128, 1)).reshape(N_angles, N, 128, 128)
+# with file_writer.as_default():
+#     # LINE-OF-SIDE ANGLE
+#     print("\nCalculating error vs line-of-side angle")
+#     N_angles, N = 10, 50
+#     Xs, ys, As, Vs = get_los_angle_error(N_angles=10, N=50, A=1, r0=10, beta=0.5, r=25, R=15)
+#     y_pred = model.predict(Xs.reshape(N_angles * N, 128, 128, 1)).reshape(N_angles, N, 128, 128)
 
-    fig = plot_los_angle(N_angles, N, ys, y_pred, As, Vs, bins, optimal)
-    fig.savefig(f"{test_dir}/los_angle.png", bbox_inches="tight")
-    tf.summary.image("8) Error vs line-of-sight angle", plot_to_image(fig), step=0)
+#     print("counts:", np.sum(Xs[0]))
+
+#     # Xs, ys, As, Vs = get_los_angle_error(N_angles=100, N=50, A=1, r0=10, beta=0.8, r=25, R=15)
+#     # y_pred2 = model.predict(Xs.reshape(N_angles * N, 128, 128, 1)).reshape(N_angles, N, 128, 128)
+
+#     # print("counts:", np.sum(Xs[0]))
+
+#     fig = plot_los_angle(N_angles, N, ys, y_pred, As, Vs, bins, optimal)
+#     fig.savefig(f"{test_dir}/los_angle.png", bbox_inches="tight")
+#     tf.summary.image("8) Error vs line-of-sight angle", plot_to_image(fig), step=0)
 
 #     # ERROR vs DISTNACE PER LOS-ANGLE
 #     print("\nCalculating error vs distance per line-of-side angle")

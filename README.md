@@ -1,44 +1,43 @@
 # *Cavity Detection Tool* (CADET)
 
-[CADET](https://tomasplsek.github.io/CADET/) is a machine learning pipeline trained for identification of surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of elliptical galaxies. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions and a DBSCAN clustering algorithm, which decomposes the predictions into individual cavities.
+[CADET](https://tomasplsek.github.io/CADET/) is a machine learning pipeline trained for identification of surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of early-type galaxies and galaxy clusters. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions and a DBSCAN clustering algorithm, which decomposes the predictions into individual cavities.
 
-The pipeline was developed as a part of my [Diploma thesis](https://is.muni.cz/th/x68od/?lang=en) ([pdf](pdfs/diploma_thesis.pdf)) in order to improve the automation and accuracy of X-ray cavity detection and size-estimation. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). While the utilized clustering algorithm is the *Sklearn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
+The pipeline was developed in order to improve the automation and accuracy of X-ray cavity detection and size-estimation. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). While the utilized clustering algorithm is the *Sklearn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
 
 ![Architecture](figures/architecture.png)
 
 ## Requirements
 
-libraries required for using the CADET pipeline:\
-`astropy`\
-`keras`\
+For simple usage of the CADET pipeline, following libraries are required:\
 `matplotlib`\
+`astropy`\
 `numpy`\
 `scipy`\
 `sklearn`\
-`tensorflow`\
-`plotly` (optionaly)
+`keras`\
+`tensorflow`
 
-additional libraries for data generation:\
-`concurrent`
+Additional [CIAO](https://cxc.harvard.edu/ciao/) library is required for cavity significance estimation. If you'd like to re-train the network or generate training images, [JAX](https://github.com/google/jax) library is required. (We recommend firstly installing CIAO with [Anaconda](https://www.anaconda.com/products/individual) and adding required libraries later. We note, however, that we experienced compatibility issues between CIAO library and GPU-supported versions of Tensorflow and JAX libraries. We therefore recommned installing either CPU-only version of Tensorflow alongside CIAO for CADET usage and significance estimation or GPU-supported Tensorflow and JAX without CIAO for re-training of the network.)
+
 
 ## Usage
 
-The CADET pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, you should normalize them by the lowest pixel value so all pixel values are higher than or equal to 1. Before passed to the neural network, the input image is also automatically scaled by a logarithm and normalized by the highest pixel value.
+The CADET pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixel values are higher than or equal to 1. Before passed to the neural network, the input image is also automatically scaled by a logarithm. 
+<!-- and normalized by the highest pixel value. -->
 
-Currently only 128x128 images are supported, however, an improvement that would enable arbitrarily sized images is under development (so-far the images were cropped and re-binned using ciao_contrib (CIAO 4.13), however, an Astropy-based version is being developed).
+Convolutional part of the CADET pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore cropped to size specified by parameter scale (size = scale * 128) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used). Currently the re-binning is done using Astropy library and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) within [CIAO](https://cxc.harvard.edu/ciao/) and applying CADET model manually (see Convolutional part).
 
-Both the ***CADET_search*** and ***CADET_size*** pipelines are composed as self-standing scripts. The discrimination threshold for the ***CADET_search*** pipeline was set to 0.9 to suppress false positive detections, while the threshold of the ***CADET_size*** pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the [Diploma thesis](pdfs/diploma_thesis.pdf)). However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
+The ***CADET*** pipeline is composed as a self-standing Python script. 
+
+The discrimination threshold for the ***CADET*** pipeline was set to 0.9 to suppress false positive detections, pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the Paper??). However, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
 
 The self-standing scripts can be run by simply calling (possibly with a `threshold` parameter - float from 0 to 1):
+`galaxy` - string, name of the source (fits file)\
+`threshold1` - float, between 0 and 1 (calibrates volume error)\
+`threshold2` - float, between 0 and 1, must be $\geq$ `threshold1` (calibrates false positive detections)
 
 ```console
-$ python3 CADET_size.py foldername [threshold]
-```
-
-or
-
-```console
-$ python3 CADET_search.py foldername [threshold]
+$ python3 CADET.py filename [threshold1] [threshold2]
 ```
 
 The script loads all the FITS files in the corresponding folder (`foldername`) and saves corresponding raw cavity predictions again into the FITS format while also properly preserving the WCS coordinates. On the output there is also a PNG file showing decomposed cavities and a TXT file containing calculated cavity areas and volumes.
@@ -47,36 +46,89 @@ The volumes of X-ray cavities are calculated under the assumption of symmetry al
 
 ### Convolutional part
 
-The convolutional part can be used separately to produce raw pixel-wise predictions. Since the convolutional networks were implemented using the functional *Keras* API, both architectures together with trained weights could have been stored in the HDF5 format (*CADET_size.h5*, *CADET_search.h5*). Fully trained models can be therefore simply loaded using the `load_model` *Keras* function.
+The convolutional part can be used separately to produce raw pixel-wise predictions. Since the convolutional network was implemented using the functional *Keras* API, the architecture together with trained weights could have been stored in the HDF5 format (*CADET.hdf5*). Trained model can be therefore simply loaded using the `load_model` *Keras* function:
 
 ```python
 from keras.models import load_model
-from keras.layers import LeakyReLU
 
-model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})
+model = load_model("CADET.hdf5")
 
 y_pred = model.predict(X)
 ```
 
-The network inputs 128x128 images. However, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(len(X), 128, 128, 1)` for multiple images.
+The CNN network inputs 128x128 images, however, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(X.shape[0], 128, 128, 1)` for multiple images.
+
+<!-- Thus produced pixel-wise prediction needs to be further thresholded and decomposed into individual cavities using a DBSCAN clustering algorithm:
+
+```python
+import numpy as np
+from sklearn.cluster import DBSCAN
+
+y_pred = np.where(y_pred > threshold, 1, 0)
+
+x, y = y_pred.nonzero()
+data = np.array([x,y]).reshape(2, -1)
+
+clusters = DBSCAN(eps=1.5, min_samples=3).fit(data.T).labels_
+``` -->
+
+### Cavity significance estimation
+
+The significance of detected cavities can be estimated using the `cavity_significance.py` python script ([CIAO](https://cxc.harvard.edu/ciao/) library required). The script takes the following arguments:\
+`galaxy` - string, name of the source (fits file)\
+`scale` - int, scale of the image {1,2,3,4}\
+`cavities` - list, list of cavities to be analyzed\
+`beta_model` - string, beta model to be fitted to radial profile {single, double}, optional (default: single)
+
+Usage: 
+```console
+$ python3 cavity_significance.py galaxy scale cavities [beta_model]
+```
+Example: 
+```console
+$ python3 cavity_significance.py NGC4649 1 [1,2]
+$ python3 cavity_significance.py NGC4649 1 [1,2] single
+$ python3 cavity_significance.py NGC5813 2 [3,5] double
+```
+
+#### Exemplary output for galaxy NGC4649
+
+![](figures/significance.png)
 
 ## Example
 
 Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies.
 
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tomasplsek/CADET/HEAD?filepath=CADET_example_binder.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
 
 ![](example/decomposed/NGC4696_CADET_size.png)
 ![](example/decomposed/NGC4778_CADET_size.png)
 ![](example/decomposed/NGC5813_CADET_size.png)
 
+## How to cite
+
+CADET pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the CADET pipeline in your research, please cite the following paper:
+
+```
+@ARTICLE{2023MNRAS.517.3682P,
+       author = {{Pl{\v{s}}ek}, T. and {Werner}, N. and {Topinka}, M. and {Simionescu}, A. and {Allen}, S.~W.},
+        title = "{CAvity DEtection Tool (CADET): Pipeline for automatic detection of X-ray cavities in atmospheres of early-type galaxies}",
+      journal = {\mnras},
+         year = 2023,
+       volume = {517},
+       number = {3},
+        pages = {3682-3710},
+          doi = {10.1093/mnras/stac2770},
+       eprint = {2203.15809}
+}
+```
+
 ## Todo
 
-The following improvements for the data generation and training processes are currently planned:
+The following improvements for the data generation and training process are currently planned:
 
-- [ ] speed up the data generation using *Tensorflow* and GPU
-- [ ] enable inputting arbitrarily sized images
+- [ ] simulate images using PyXsim/SOXS
 - [ ] add other features (cold fronts, point sources)
-- [ ] improve existing features (bright rims, gas sloshing)
-- [ ] examine various other CNN architectures
-- [ ] restrict the cavity predictions using output regularization
+- [ ] replace DBSCAN by using instance segmentation 
+- [ ] restrict the cavity number and shape using regularization?
+<!-- - [ ] enable inputting arbitrarily sized images -->

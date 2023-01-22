@@ -1,6 +1,6 @@
 from tensorflow.keras.initializers import Constant, TruncatedNormal, HeNormal
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Activation, BatchNormalization, concatenate, Conv2D, Dropout, Input, MaxPooling2D, PReLU, LeakyReLU
+from tensorflow.keras.layers import Activation, BatchNormalization, concatenate, Conv2D, Dropout, Input, PReLU
 
 ##################### STAN's MODEL #####################
 
@@ -19,32 +19,25 @@ shapes_layers_final = [[8, (8,8)],
                        [2, (32,32)],
                        [1, (64,64)]]
 
-
 # init_kernel = HeNormal(seed=420)
 init_kernel = TruncatedNormal(mean=0.0, stddev=0.03, seed=420)
-init_bias = Constant(value=0.0)
+init_bias = Constant(value=0.01)
 
-def block(data, filters, shapes, active="None", mpool=False, drop=False):
+def block(data, filters, shapes, active="None", drop=False):
     # INCEPTION LAYER
     layers = []
     for f, s in shapes:
         out_layer = Conv2D(filters = f, kernel_size = s, strides = stride,
                            kernel_initializer = init_kernel, bias_initializer = init_bias,
                            padding = "same", activation = None)(data)
-        
-        # INCEPTION ACTIVATION
-        if active != "None":
-            out_layer = BatchNormalization(axis = -1)(out_layer)
 
-            if active == "relu": out_layer = Activation("relu")(out_layer)
-            elif active == "prelu": out_layer = Activation(PReLU())(out_layer)
+        # ACTIVATION FUNCTION
+        if active == "relu": out_layer = Activation("relu")(out_layer)
+        elif active == "prelu": out_layer = Activation(PReLU())(out_layer)
 
-            if drop: out_layer = Dropout(drop)(out_layer)
+        out_layer = BatchNormalization(axis = -1)(out_layer)
 
         layers.append(out_layer)
-
-    # MAXPOOLING
-    if mpool: layers.append(MaxPooling2D(pool_size=(1,1), strides=stride, padding="same")(data))
 
     # CONCATENATE INCEPTION FILTERS
     layers = concatenate(layers, axis=-1)
@@ -56,24 +49,24 @@ def block(data, filters, shapes, active="None", mpool=False, drop=False):
 
     # ACTIVATION FUNCTION
     if filters > 1:
-        out_layer = BatchNormalization(axis = -1)(out_layer)
-        out_layer = Activation("relu")(out_layer)
+        if active == "relu": out_layer = Activation("relu")(out_layer)
+        elif active == "prelu": out_layer = Activation(PReLU())(out_layer)
 
-        # if active == "relu": out_layer = Activation("relu")(out_layer)
-        # elif active == "prelu": out_layer = Activation(PReLU())(out_layer)
+        out_layer = BatchNormalization(axis = -1)(out_layer)
 
         if drop: out_layer = Dropout(drop)(out_layer)
+    
     else: out_layer = Activation("sigmoid")(out_layer)
 
     return out_layer
 
-def Stannet(shape_image, active="None", mpool=False, drop=False):
+def Stannet(shape_image, active="None", drop=False):
     input_data = Input(shape=(shape_image))
     data = BatchNormalization(axis = -1)(input_data)
-    data = block(data, 32, shapes_layers, active, mpool, drop)
-    data = block(data, 64, shapes_layers, active, mpool, drop)
-    data = block(data, 64, shapes_layers, active, mpool, drop)
-    data = block(data, 32, shapes_layers, active, mpool, drop)
-    data = block(data, 1, shapes_layers_final, mpool=mpool)
+    data = block(data, 32, shapes_layers, active, drop)
+    data = block(data, 64, shapes_layers, active, drop)
+    data = block(data, 64, shapes_layers, active, drop)
+    data = block(data, 32, shapes_layers, active, drop)
+    data = block(data, 1, shapes_layers_final, active)
     output = Model([input_data], data)
     return output
