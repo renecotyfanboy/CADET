@@ -2,7 +2,7 @@
 
 [CADET](https://tomasplsek.github.io/CADET/) is a machine learning pipeline trained for identification of surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of early-type galaxies and galaxy clusters. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions and a DBSCAN clustering algorithm, which decomposes the predictions into individual cavities.
 
-The pipeline was developed in order to improve the automation and accuracy of X-ray cavity detection and size-estimation. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). While the utilized clustering algorithm is the *Sklearn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
+The pipeline was developed in order to improve the automation and accuracy of X-ray cavity detection and size-estimation. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an Inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). For clustering, we utilized is the *Scikit-learn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
 
 ![Architecture](figures/architecture.png)
 
@@ -17,30 +17,30 @@ For simple usage of the CADET pipeline, following libraries are required:\
 `keras`\
 `tensorflow`
 
-Additional [CIAO](https://cxc.harvard.edu/ciao/) library is required for cavity significance estimation. If you'd like to re-train the network or generate training images, [JAX](https://github.com/google/jax) library is required. (We recommend firstly installing CIAO with [Anaconda](https://www.anaconda.com/products/individual) and adding required libraries later. We note, however, that we experienced compatibility issues between CIAO library and GPU-supported versions of Tensorflow and JAX libraries. We therefore recommned installing either CPU-only version of Tensorflow alongside CIAO for CADET usage and significance estimation or GPU-supported Tensorflow and JAX without CIAO for re-training of the network.)
+Additional [CIAO](https://cxc.harvard.edu/ciao/) library is required for cavity significance estimation. If you'd like to re-train the network or generate training images, [JAX](https://github.com/google/jax) library is required. (We recommend firstly installing CIAO with [Anaconda](https://www.anaconda.com/products/individual) and adding required libraries later. We note, however, that we experienced compatibility issues between CIAO library and GPU-supported versions of Tensorflow and JAX libraries. We therefore recommned installing either CPU-only version of Tensorflow alongside CIAO for simple ***CADET*** usage and significance estimation or GPU-supported Tensorflow and JAX without CIAO for re-training of the network.)
 
 
 ## Usage
 
-The CADET pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixel values are higher than or equal to 1. Before passed to the neural network, the input image is also automatically scaled by a logarithm. 
-<!-- and normalized by the highest pixel value. -->
+The ***CADET*** pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixel values are higher than or equal to 1. Before passed to the neural network, the input image is also automatically scaled by a logarithm. For images with many point sources, we recommend filling point sources with surrounding background level using Poisson statistics ([dmfilth](https://cxc.cfa.harvard.edu/ciao/ahelp/dmfilth.html) within [CIAO](https://cxc.harvard.edu/ciao/)).
 
-Convolutional part of the CADET pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore cropped to size specified by parameter scale (size = scale * 128) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used). Currently the re-binning is done using Astropy library and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) within [CIAO](https://cxc.harvard.edu/ciao/) and applying CADET model manually (see Convolutional part).
+Convolutional part of the ***CADET*** pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore being cropped to size specified by parameter scale (size = scale * 128) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used). Currently the re-binning is done using Astropy library and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) within [CIAO](https://cxc.harvard.edu/ciao/) and applying ***CADET*** model manually (see Convolutional part).
 
 The ***CADET*** pipeline is composed as a self-standing Python script. 
 
-The discrimination threshold for the ***CADET*** pipeline was set to 0.9 to suppress false positive detections, pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the Paper??). However, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
+The discrimination threshold for the ***CADET*** pipeline was set to 0.7 to suppress false positive detections, pipeline was set to 0.55 so the predicted volumes are not underestimated nor overestimated (for more info see the Paper??). However, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
 
-The self-standing scripts can be run by simply calling (possibly with a `threshold` parameter - float from 0 to 1):
+The `CADET.py` script can be run by simply calling it from a terminal using following arguments:\
 `galaxy` - string, name of the source (fits file)\
-`threshold1` - float, between 0 and 1 (calibrates volume error)\
-`threshold2` - float, between 0 and 1, must be $\geq$ `threshold1` (calibrates false positive detections)
+`threshold1` - float, between 0 and 1, calibrates volume error, optional (default: 0.4)\
+`threshold2` - float, between 0 and 1, calibrates false positive rate, optional (default: 0.7)
 
 ```console
 $ python3 CADET.py filename [threshold1] [threshold2]
 ```
 
-The script loads all the FITS files in the corresponding folder (`foldername`) and saves corresponding raw cavity predictions again into the FITS format while also properly preserving the WCS coordinates. On the output there is also a PNG file showing decomposed cavities and a TXT file containing calculated cavity areas and volumes.
+The script loads a FITS file specified by argument `galaxy`, creates a folder of the same name and saves corresponding raw cavity predictions again into the FITS format while also properly preserving the WCS coordinates. On the output there is also a PNG file showing decomposed cavities.
+ <!-- and a TXT file containing calculated cavity areas and volumes. -->
 
 The volumes of X-ray cavities are calculated under the assumption of symmetry along the direction from the galactic centre into the centre of the cavity (calculated as *center of mass*). The cavity depth in each point on that line is assumed to be equal to its width (perpendicular to that line). Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation)
 
@@ -101,9 +101,7 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
 
-![](example/decomposed/NGC4696_CADET_size.png)
-![](example/decomposed/NGC4778_CADET_size.png)
-![](example/decomposed/NGC5813_CADET_size.png)
+![](figures/CADET_size.png)
 
 ## How to cite
 
