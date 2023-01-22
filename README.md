@@ -1,14 +1,15 @@
 # *Cavity Detection Tool* (CADET)
 
-[CADET](https://tomasplsek.github.io/CADET/) is a machine learning pipeline trained for identification of surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of early-type galaxies and galaxy clusters. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions and a DBSCAN clustering algorithm, which decomposes the predictions into individual cavities.
+[***CADET***](https://tomasplsek.github.io/CADET/) is a machine learning pipeline trained for identification of surface brightness depressions (so-called *X-ray cavities*) on noisy *Chandra* images of early-type galaxies and galaxy clusters. The pipeline consists of a convolutional neural network trained for producing pixel-wise cavity predictions and a DBSCAN clustering algorithm, which decomposes the predictions into individual cavities.
 
-The pipeline was developed in order to improve the automation and accuracy of X-ray cavity detection and size-estimation. The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an Inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). For clustering, we utilized is the *Scikit-learn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
+<!-- The pipeline was developed in order to improve the automation and accuracy of X-ray cavity detection and size-estimation.  -->
+The architecture of the convolutional network consists of 5 convolutional blocks, each resembling an Inception layer, and it's development was inspired by [Fort et al. 2017](https://ui.adsabs.harvard.edu/abs/2017arXiv171200523F/abstract) and [Secká 2019](https://is.muni.cz/th/rnxoz/?lang=en;fakulta=1411). For clustering, we utilized is the *Scikit-learn* implementation of the Density-Based Spatial Clustering of Applications with Noise (DBSCAN, [Ester et al. 1996](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.121.9220)).
 
 ![Architecture](figures/architecture.png)
 
 ## Requirements
 
-For simple usage of the CADET pipeline, following libraries are required:\
+For simple usage of the ***CADET***  pipeline, following libraries are required:\
 `matplotlib`\
 `astropy`\
 `numpy`\
@@ -18,8 +19,8 @@ For simple usage of the CADET pipeline, following libraries are required:\
 `tensorflow`
 
 If you want to re-train the network from scratch or generate training images, additional libraries are required:\
-`concurrent`\
-[`jax`](https://github.com/google/jax)
+[`jax`](https://github.com/google/jax)\
+`concurrent`
 
 For cavity significance estimation (`cavity_significance.py`), additional `ciao_contrib` ([CIAO](https://cxc.harvard.edu/ciao/)) library is required.  (We recommend firstly installing CIAO with [Anaconda](https://www.anaconda.com/products/individual) and adding required libraries later. We note, however, that we experienced compatibility issues between CIAO library and GPU-supported versions of Tensorflow and JAX libraries. We therefore recommned installing either CPU-only version of Tensorflow alongside CIAO for simple ***CADET*** usage and significance estimation or GPU-supported Tensorflow and JAX without CIAO for re-training of the network or using separate Anaconda environments for each of these purposes.)
 
@@ -55,7 +56,9 @@ The script loads a FITS file specified by `galaxy` argument (`f"{galaxy}.fits"`)
 
 ![](figures/NGC5813.png)
 
-### Convolutional part $\;$ [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
+### Convolutional part
+
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb)
 
 The convolutional part of the pipeline can be used separately to produce raw pixel-wise predictions. Since the convolutional network was implemented using the functional *Keras* API, the architecture together with trained weights could have been stored in the HDF5 format (*CADET.hdf5*). Trained model can be therefore simply loaded using the `load_model` *Keras* function:
 
@@ -116,7 +119,7 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 
 ## How to cite
 
-CADET pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the CADET pipeline in your research, please cite the following paper:
+***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the ***CADET***  pipeline in your research, please cite the following paper:
 
 ```
 @ARTICLE{2023MNRAS.517.3682P,
