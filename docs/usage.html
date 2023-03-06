@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CADET</title>
+<link rel="icon" href="figures/logo.png">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+
+<body>
+<link rel="stylesheet" href="styles.css">
+<!-- <link rel="stylesheet" href="prism.css"> -->
+
+<a href="https://github.com/tomasplsek/CADET"><img src="figures/github.png" style="position: relative; width: 100px; left: 0%; top: 17px; float: right; margin-right: 0px;"></a>
+
+<header><em>Cavity Detection Tool</em>  (CADET)</header>
+
+<img src="figures/CADET.png" style="float: right; width: 290px; padding-right: 120px; position: fixed; left: 78%; top: 21%;">
+
+<div class="sidenav">
+<a id="menu" href="index.html">Overview</a>
+<a id="menu" href="training.html">Training</a>
+<a id="menu" href="requirements.html">Requirements</a>
+<a style="color: rgb(20, 97, 179);font-weight: bold;" id="menu" href="usage.html">Usage</a>
+<a id="menu" href="example.html">Example</a>
+</div>
+
+<main>
+
+<section>
+
+<h1>Usage</h1>
+
+<p>The CADET pipeline inputs either raw <em>Chandra</em> images with units of counts 
+(numbers of captured photons) or normalized processed background-subtracted 
+and/or exposure-corrected images. When using flux images for instance, try 
+normalizing them by the lowest pixel value so all pixel values are higher 
+than or equal to unity. The input image is afterwards automatically scaled 
+by a logarithm and normalized by the highest pixel value. Currently only 
+128x128 images are supported, however, an improvement that would enable 
+arbitrarily sized images is under development (so-far the images were cropped 
+and re-binned via ciao_contrib (CIAO 4.13), however, an Astropy version is being developed).
+Both the <b><em>CADET_search</em></b> and <b><em>CADET_size</em></b> pipelines 
+are composed as self-standing scripts. Discrimination threshold for the <b><em>CADET_search</em></b> 
+pipeline was set to 0.9 to suppress false positive detections, while the threshold of the 
+<b><em>CADET_size</em></b> pipeline was set to 0.55 so the predicted volumes are not underestimated 
+nor overestimated (for more info see the <a target="_blank" href="https://github.com/tomasplsek/CADET/blob/main/pdfs/diploma_thesis.pdf">Diploma thesis</a>). 
+However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
+The scripts can be run by simply calling (possibly with a threshold parameter - float from 0 to 1):
+
+<br><br>
+
+<code>$ python3 CADET_size.py foldername [threshold]</code>
+
+<br><br>
+
+and
+
+<br><br>
+
+<code>$ python3 CADET_search.py foldername [threshold]</code>
+
+<br><br>
+
+which uses all <code>.fits</code> files in the corresponding folder 
+<code>foldername</code>) and saves their raw cavity predictions into the
+<code> .fits</code> files while also properly preserving the WCS coordinates. 
+On the output there is also a <code>.png</code> file showing decomposed 
+cavities and a <code>.txt</code> file containing calculated areas and cavity volumes.
+The volumes of X-ray cavities are calculated under the assumption of a 
+symmetry along the direction from the galactic centre into the centre of 
+the cavity (<em>center of mass</em>). The cavity depth in each point along 
+that direction is assumed to be equal to its width. Thereby produced 3D 
+cavity models can be alternatively viewed or stored in the <code>.npy</code> 
+format for further use (e.g. cavity energy calculation).</p>
+
+<br>
+
+<h2>Convolutional part</h2>
+
+<p>
+The convolutional part can be used separately to produce raw pixel-wise predictions. 
+Since the architecture of the convolutional network was implemented using the 
+functional *Keras* API, the architectures together with trained weights could 
+have been stored in the HDF5 format (<em>CADET_size.h5</em>, <em>CADET_search.h5</em>). 
+The trained models can be simply loaded using the <code>load_model</code> <em>Keras</em> function.
+
+<br><br>
+<code>
+from keras.models import load_model<br>
+from keras.layers import LeakyReLU<br>
+<br>
+model = load_model("CADET_size.h5", custom_objects = {"LeakyReLU": LeakyReLU})<br>
+<br>
+y_pred = model.predict(X)
+</code>
+<br><br>
+
+The network inputs 128x128 images. However, to maintain the compatibility with <em>Keras</em>, 
+the input needs to be reshaped as <code>X.reshape(1, 128, 128, 1)</code> for single image or as 
+<code>X.reshape(len(X), 128, 128, 1)</code> for multiple images.
+</p>
+
+</section>
+
+</main>
+
+<footer>
+&#169; Tomáš Plšek <span style="font-weight: bolder;">&middot;</span> červenec 2021
+</footer>    
+
+</body>
+
+</html>

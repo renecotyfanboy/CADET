@@ -34,18 +34,20 @@ Before being decomposed by the DBSCAN algorithm, pixel-wise predictions produced
 
 The ***CADET*** pipeline is composed as a self-standing Python script (`CADET.py`), which can be run by simply calling it from a terminal using following arguments:\
 `galaxy` - string, name of the source (name of fits file)\
+`scales` - list, list of size scales used to crop input images, optional (default: [1,2,3,4])\
 `threshold1` - float, between 0 and 1, calibrates volume error, optional (default: 0.4)\
 `threshold2` - float, between 0 and 1, calibrates false positive rate, optional (default: 0.65)
 
 ```console
-$ python3 CADET.py galaxy [threshold1] [threshold2]
+$ python3 CADET.py galaxy [scales] [threshold1] [threshold2]
 ```
 
 Example:
 
 ```console
 $ python3 CADET.py NGC5813
-$ python3 CADET.py NGC5813 0.5 0.9
+$ python3 CADET.py NGC5813 [1,2,3,4,5]
+$ python3 CADET.py NGC5813 [1,2,3,4,5] 0.5 0.9
 ```
 
 The script loads a FITS file specified by `galaxy` argument (`f"{galaxy}.fits"`) located in the same folder as the `CADET.py` script, creates a folder of the same name, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.

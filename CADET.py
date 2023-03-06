@@ -67,7 +67,7 @@ def regrid(fname, scale):
 def decompose(pred, th2=0.7, amin=10):
     '''
     Decomposes the pixel-wise prediction into individual cavities.
-    Applies higher thresholding and minimal area cut.
+    Applies the higher discrimination threshold and minimal area cut.
     Returns a list of cavities (128x128 matrices).
     '''
 
@@ -101,7 +101,7 @@ def decompose(pred, th2=0.7, amin=10):
 def make_cube(image, galaxy, scale, cavity):
     '''
     Assuming rotational symmetry, this function creates a 3D representation of the cavity.
-    The 3D cube is saved as a .npy file and can further be used to calculate total cavity energy E=4pV.
+    The 3D cube is saved as a .npy file and can further be used to calculate total cavity energy (E=4pV).
     '''
 
     # DE-ROTATES CAVITY
