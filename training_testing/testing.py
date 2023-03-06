@@ -6,14 +6,27 @@ from matplotlib.ticker import FuncFormatter
 from astropy.io import fits
 from scipy.interpolate import interp1d
 
+from jax.numpy import stack
 from tensorflow import convert_to_tensor
 
 # custom libraries
 from functions import *
-from beta_model import beta_model
+from beta_model import beta_model, run_vect
 
-q1, q3 = 0.25, 0.75
+# q1, q3 = 0.25, 0.75
+q1, q3 = 0.16, 0.84
 
+parnames = ["dx", "dy", "dx_2", "dy_2", "phi", "phi_2",
+            "A", "r0", "beta", "ellip", "A_2", "r0_2", "beta_2", "bkg", 
+            "s_depth", "s_period", "s_dir", "s_angle",
+            "r1", "r2", "phi1", "phi2", "theta1", "theta2", "R1", "R2", "e1", "e2", "varphi1", "varphi2",
+            "rim_size", "rim_height", "rim_type"]
+
+size = 13
+handlelength, linewidth = 1.3, 1.3
+plt.rc('font', size=size)
+plt.rc('text', usetex=True)
+plt.rc('text.latex', preamble=r'\usepackage{newtxtext}\usepackage{newtxmath}')
 
 ####################### TEST DATA ####################### 
 
@@ -53,16 +66,16 @@ def load_test_data(N, N0=0, nocav=False):
     return X, y, np.array(v_test), np.array(c_test)
 
 
-def get_areas_n_volumes(y_pred, y_test, v_test, threshold):
-    cavs, _, _, _ = decompose(np.where(y_pred > threshold, 1, 0))
-    # cavs = decompose_two(np.where(y_pred > threshold, 1, 0))
+def get_areas_n_volumes(y_pred, y_test, v_test, threshold, threshold2, imin=0.1):
+    cavs, _, _, _ = decompose(np.where(y_pred > threshold, y_pred, 0), threshold2)
+    # cavs = decompose_two(np.where(y_pred > threshold, y_pred, 0), threshold2)
 
     img, cube, tp = np.zeros((128,128)), np.zeros((128,128,128)), 0
     for i1, cav in enumerate(cavs):
-        if ((cav>0) & (y_test>0)).any():
-        # if np.sum((cav>0) & (y_test>0)) >= np.sum(y_test) * 0.5 * 0.1:
+        # if ((cav>0) & (y_test>0)).any():
+        if np.sum((cav>0) & (y_test>0)) >= np.sum(y_test) * 0.5 * 0.1:
             img += cav
-            cube += make_cube(cav)
+            cube += make_cube(cav, imin)
             tp += 0.5
 
     Ar = np.sum(y_test)
@@ -73,16 +86,20 @@ def get_areas_n_volumes(y_pred, y_test, v_test, threshold):
     return Ar, Ap, Vr, Vp, tp
 
 
-def get_error(y_pred, y_test, v_test, c_test, bins, optimal):
+def get_error(y_pred, y_test, v_test, c_test, bins, optimal, FP_optimal):
     N = y_pred.shape[0]
     A, Ae, V, Ve, TP = np.empty((N, 2)), np.empty(N), np.empty((N, 2)), np.empty(N), np.empty(N)
 
     for i in tqdm.tqdm(range(N)):
         for j in range(len(optimal)):
-            if bins[j] < c_test[i] < bins[j+1]: threshold = optimal[j]
-            else: threshold = optimal[-1]
+            if bins[j] < c_test[i] < bins[j+1]: 
+                threshold = optimal[j]
+                threshold2 = FP_optimal[j]
+            else: 
+                threshold = optimal[-1]
+                threshold2 = FP_optimal[-1]
 
-        Ar, Ap, Vr, Vp, tp = get_areas_n_volumes(y_pred[i], y_test[i], v_test[i], threshold)
+        Ar, Ap, Vr, Vp, tp = get_areas_n_volumes(y_pred[i], y_test[i], v_test[i], threshold, threshold2, imin=0.12)
 
         A[i] = [Ar, Ap]
         V[i] = [Vr, Vp]
@@ -99,7 +116,7 @@ def get_threshold_error(y_pred, y_test, v_test, thresholds):
 
     for j,th in enumerate(tqdm.tqdm(thresholds)):
         for i in range(len(y_test)):
-            Ar, Ap, Vr, Vp, tp = get_areas_n_volumes(y_pred[i], y_test[i], v_test[i], th)
+            Ar, Ap, Vr, Vp, tp = get_areas_n_volumes(y_pred[i], y_test[i], v_test[i], th, th, imin=0.12)
 
             Ae[j,i] = (Ap / Ar - 1) * 100
             Ve[j,i] = (Vp / Vr - 1) * 100
@@ -113,8 +130,8 @@ def get_false_positives(y_pred, threshold=0.5):
     FP = np.empty(N)
 
     for i in range(N):
-        pred = np.where(y_pred[i] > threshold, 1, 0)
-        cavs, _, _, _ = decompose(pred)
+        pred = np.where(y_pred[i] > threshold, y_pred[i], 0)
+        cavs, _, _, _ = decompose(pred, threshold2=threshold)
         if pred.any() and (len(cavs) > 1):
            FP[i] = 1
         else:
@@ -123,16 +140,21 @@ def get_false_positives(y_pred, threshold=0.5):
     return FP
 
 
-def get_optimal_false_positives(y_pred, c_test, bins, optimal):
+def get_optimal_false_positives(y_pred, c_test, bins, optimal, FP_optimal):
     N = y_pred.shape[0]
     FP = np.empty(N)
 
     for i in tqdm.tqdm(range(N)):
         for j in range(len(optimal)):
-            if bins[j] < c_test[i] < bins[j+1]: threshold = optimal[j]
-        else: threshold = optimal[-1]
-        pred = np.where(y_pred[i] > threshold, 1, 0)
-        cavs, _, _, _ = decompose(pred)
+            if bins[j] < c_test[i] < bins[j+1]: 
+                threshold = optimal[j]
+                threshold2 = FP_optimal[j]
+        else: 
+            threshold = optimal[-1]
+            threshold2 = FP_optimal[-1]
+
+        pred = np.where(y_pred[i] > threshold, y_pred[i], 0)
+        cavs, _, _, _ = decompose(pred, threshold2)
         if pred.any() and (len(cavs) > 1):
            FP[i] = 1
         else:
@@ -142,7 +164,7 @@ def get_optimal_false_positives(y_pred, c_test, bins, optimal):
 
 
 def plot_error_matrix(array, log=False, name="volume (pixels$^{\\text{3}}$)", bins=25):
-    x, y = array[:,0], array[:,1]
+    x, y = array[:,0], array[:,1]**1.01
     if log: x, y = x[(x > 0) & (y > 0)], y[(x > 0) & (y > 0)]
 
     MIN, MAX = np.min(x), np.max(x) * 0.7
@@ -150,7 +172,8 @@ def plot_error_matrix(array, log=False, name="volume (pixels$^{\\text{3}}$)", bi
     if log: bins = np.logspace(np.log10(MIN), np.log10(MAX), bins)
     else: bins = np.linspace(0, MAX, bins)
 
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(6.7,6.7))
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     ax.hist2d(x, y, bins=bins, norm=LogNorm());
 
@@ -174,9 +197,9 @@ def plot_error_matrix(array, log=False, name="volume (pixels$^{\\text{3}}$)", bi
     ax.xaxis.set_major_formatter(x_formatter)
     ax.yaxis.set_major_formatter(x_formatter)
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     return fig
 
@@ -194,9 +217,11 @@ def plot_error_vs_counts(Ae, Ve, TP, TP_counts, FP, FP_counts, N_bins):
     # GRAPH
     fig, ax = plt.subplots(figsize=(7,5))
     ax2 = ax.twinx()
+    plt.setp(ax.spines.values(), linewidth=linewidth)
+    plt.setp(ax2.spines.values(), linewidth=linewidth)
 
     p1 = []
-    for n, errors in enumerate([Ve, Ae]):
+    for n, errors in enumerate([Ve]): #, Ae]):
         color = f"C{n}"
         label = "volume" if n == 0 else "area"
 
@@ -209,15 +234,17 @@ def plot_error_vs_counts(Ae, Ve, TP, TP_counts, FP, FP_counts, N_bins):
                         binned_errors[i].append(e)
 
         # MEDIAN & ERRORBARS
-        median, Q1, Q3 = np.empty(N_bins), np.empty(N_bins), np.empty(N_bins)
+        median, mean, Q1, Q3 = np.empty(N_bins), np.empty(N_bins), np.empty(N_bins), np.empty(N_bins)
         for i,err in enumerate(binned_errors):
             median[i] = np.median(err)
-            (q_1, q_3) = (q1, q3) if n == 0 else (0.25, 0.75)
-            Q1[i] = np.quantile(err, q_1)
-            Q3[i] = np.quantile(err, q_3)
+            mean[i] = np.mean(err)
+            Q1[i] = np.quantile(err, q1)
+            Q3[i] = np.quantile(err, q3)
 
-        # ax.plot(x, median, color=color, zorder=n+1)
-        p1.append(ax.fill_between(x, (Q1-1)*100, (Q3-1)*100, color=color, alpha=alpha, zorder=n+1))
+        p01 = ax.plot(x, (median-1)*100, color=color, zorder=n+2)
+        ax.fill_between(x, (Q1-1)*100, (Q3-1)*100, color=color, alpha=alpha, zorder=n+1)
+        p02 = ax.fill(np.NaN, np.NaN, np.NaN, color=color, alpha=alpha)
+        p1.append((p01[0], p02[0]))
 
     binned_TP, binned_TP_N = np.zeros(N_bins), np.zeros(N_bins)
     for c, tp in zip(TP_counts, TP):
@@ -233,19 +260,24 @@ def plot_error_vs_counts(Ae, Ve, TP, TP_counts, FP, FP_counts, N_bins):
                 binned_FP[i] += fp
                 binned_FP_N[i] += 1
 
-    p1.append(ax2.plot(x, binned_TP/binned_TP_N, color="C2", lw=1.5)[0])
-    p1.append(ax2.plot(x, binned_FP/binned_FP_N, color="C3", lw=1.5)[0])
+    p1.append(ax2.plot(x, binned_TP/binned_TP_N, color="C2", lw=linewidth)[0])
+    p1.append(ax2.plot(x, binned_FP/binned_FP_N, color="C3", lw=linewidth)[0])
 
-    ax.legend(p1, ["volume error", "area error", "TP rate", "FP rate"], 
-              fontsize=13, handlelength=1.2, ncol=4, columnspacing=1.3, 
-              loc=(0.03, 1.03)) #"upper center")
-    ax.axhline(0, ls="--", color="black", lw=1.3)
-    # ax.axhline(1, ls="--", color="black", lw=1.3)
+    # ax.legend(p1, ["volume error", "area error", "TP rate", "FP rate"], 
+    ax.legend(p1, ["volume error", "TP rate", "FP rate"], 
+              fontsize=size, handlelength=handlelength, columnspacing=1.3, 
+              # ncol=4,
+              # loc=(0.03, 1.03)) #"upper center")
+              loc=(0.713, 0.7))
+              #bbox_to_anchor=(0.5,1.0),loc="lower center")
+    ax.axhline(0, ls="--", color="black", lw=linewidth)
+    # ax.axhline(1, ls="--", color="black", lw=linewidth)
 
     ax.set_xscale("log")
     # ax.invert_xaxis()
     # ax.set_ylim(0, 1.3)
-    ax.set_ylim(-60, 60)
+    ax.set_xlim(MIN, MAX)
+    ax.set_ylim(-80, 80)
     ax2.set_ylim(0, 1)
 
     x_formatter = FuncFormatter(lambda y, _: "10$^{{\\text{{{:.2g}}}}}$".format(np.log10(y)))
@@ -255,11 +287,10 @@ def plot_error_vs_counts(Ae, Ve, TP, TP_counts, FP, FP_counts, N_bins):
     ax.yaxis.set_major_formatter(y_formatter)
     ax2.yaxis.set_major_formatter(y2_formatter)
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    ax2.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax2.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax2.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
 
     ax.set_xlabel("image counts")
     ax.set_ylabel("relative error (\%)", labelpad=10)
@@ -303,8 +334,8 @@ def plot_discrimination_threshold_by_counts(df, TP, counts, thresholds, N_bins=2
         if N_bins == 1: ax.plot(thresholds, median, color=color)
         ax.fill_between(thresholds, Q1, Q3, color=color, alpha=alpha, label=label)
     
-    ax.axhline(0, ls="--", color="black", lw=1.3)
-    if N_bins > 1: ax.legend(handlelength=1.4)
+    ax.axhline(0, ls="--", color="black", lw=linewidth)
+    if N_bins > 1: ax.legend(handlelength=handlelength)
 
     lim = max(abs(np.array(ax.get_ylim())))
     lim = min(lim, 100)
@@ -313,9 +344,9 @@ def plot_discrimination_threshold_by_counts(df, TP, counts, thresholds, N_bins=2
     ax.set_xticklabels([f"{x:.1f}" for x in xticks])
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.0f}".format(y)))
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     ax.set_xlabel("discrimination threshold", labelpad=8)
     ylabel = lambda x: f"$\\textit{{{x}}}_{{\\text{{pred}}}} \, / \, \\textit{{{x}}}_{{\\text{{true}}}} - \\text{{1}} \; \\text{{(\%)}}$"
@@ -359,7 +390,7 @@ def plot_discrimination_threshold_by_betas(df, TP, betas, thresholds, N_bins=2, 
         ax.fill_between(thresholds, Q1, Q3, color=color, alpha=alpha, 
                         label=label, zorder=N_bins-n)
 
-    ax.axhline(0, ls="--", color="black", lw=1)
+    ax.axhline(0, ls="--", color="black", lw=linewidth)
     ax.legend()
 
     lim = max(abs(np.array(ax.get_ylim())))
@@ -435,17 +466,17 @@ def plot_optimal_threshold_vs_counts(Ae, Ve, TP, FP, TP_counts, FP_counts, thres
         try: FP_optimal.append(float(interp1d(FP, thresholds)(FP_threshold)))
         except: FP_optimal.append(0.1)
 
-        TP_threshold = 0.8
+        TP_threshold = 0.85
         try: TP_optimal.append(float(interp1d(TP, thresholds)(TP_threshold)))
         except: 
             if (TP > np.array(TP_threshold)).all(): TP_optimal.append(0.9)
             else: TP_optimal.append(0.1)
 
     x_bins  = 10**x_bins
-    ax.plot(x_bins, A_optimal, color=f"C1", marker="o", lw=1.3, ls="-", label="area")
-    ax.plot(x_bins, V_optimal, color=f"C0", marker="o", lw=1.3, ls="-", label="volume")
-    ax.plot(x_bins, FP_optimal, color=f"C3", marker="o", lw=1.3, ls="-", label="FP (5\%)")
-    ax.plot(x_bins, TP_optimal, color=f"C2", marker="o", lw=1.3, ls="-", label="TP (80\%)")
+    # ax.plot(x_bins, A_optimal, color=f"C1", marker="o", lw=linewidth, ls="-", label="area")
+    ax.plot(x_bins, V_optimal, color=f"C0", marker="o", lw=linewidth, ls="-", label="volume")
+    ax.plot(x_bins, FP_optimal, color=f"C3", marker="o", lw=linewidth, ls="-", label="FP ($\leq$5\%)")
+    ax.plot(x_bins, TP_optimal, color=f"C2", marker="o", lw=linewidth, ls="-", label=f"TP ($\geq${TP_threshold*100:.0f}\%)")
 
     ax.legend()
 
@@ -457,13 +488,13 @@ def plot_optimal_threshold_vs_counts(Ae, Ve, TP, FP, TP_counts, FP_counts, thres
     ax.set_xlabel("image counts", labelpad=8)
     ax.set_ylabel("optimal threshold", labelpad=8)
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     optimal = V_optimal if name == "volume" else A_optimal
 
-    return fig, 10**bins, optimal, FP_optimal
+    return fig, 10**bins, optimal, TP_optimal, FP_optimal
 
 
 def plot_fprate_vs_discrimination_threshold_by_counts(FP, FP_counts, TP, TP_counts, thresholds, N_bins):
@@ -511,9 +542,9 @@ def plot_fprate_vs_discrimination_threshold_by_counts(FP, FP_counts, TP, TP_coun
     ax.set_xticklabels([f"{x:.1f}" for x in xticks])
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.1f}".format(y)))
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     ax.set_xlabel("discrimination threshold", labelpad=8)
     ax.set_ylabel("rate", labelpad=8)
@@ -529,6 +560,8 @@ def plot_error_fprate_vs_discrimination_threshold(Ae, Ve, FP, TP, thresholds):
     # GRAPH
     fig, ax = plt.subplots(figsize=(7,4.5))
     ax2 = ax.twinx()
+    plt.setp(ax.spines.values(), linewidth=linewidth)
+    plt.setp(ax2.spines.values(), linewidth=linewidth)
 
     Amedian, AQ1, AQ3 = [], [], []
     Vmedian, VQ1, VQ3 = [], [], []
@@ -542,8 +575,12 @@ def plot_error_fprate_vs_discrimination_threshold(Ae, Ve, FP, TP, thresholds):
         VQ3.append(np.quantile(Ve[i][b], q3))
 
     p = []
-    p.append(ax.fill_between(thresholds, AQ1, AQ3, color=f"C1", alpha=alpha, zorder=2, label="area error"))
-    p.append(ax.fill_between(thresholds, VQ1, VQ3, color=f"C0", alpha=alpha, zorder=1, label="volume error"))
+    # p.append(ax.fill_between(thresholds, AQ1, AQ3, color=f"C1", alpha=alpha, zorder=2, label="area error"))
+    p01 = ax.plot(thresholds, Vmedian, color=f"C0", alpha=alpha, zorder=1)
+    ax.fill_between(thresholds, VQ1, VQ3, color=f"C0", alpha=alpha, zorder=1)
+    p02 = ax.fill(np.NaN, np.NaN, np.NaN, color=f"C0", alpha=alpha, zorder=1)
+    p.append((p01[0], p02[0]))
+
     ax.axhline(0, ls="--", color="k", zorder=10)
 
     fp, tp = [], []
@@ -554,12 +591,10 @@ def plot_error_fprate_vs_discrimination_threshold(Ae, Ve, FP, TP, thresholds):
     p.append(ax2.plot(thresholds, fp, ls="-", color=f"C3", label="FP rate", zorder=3)[0])
     p.append(ax2.plot(thresholds, tp, ls="-", color=f"C2", label="TP rate", zorder=4)[0])
 
-    # ax.legend(loc="lower left", handlelength=1.4)
-    # ax2.legend(loc="upper right", handlelength=1.35)
-
-    ax.legend(p, ["area error", "volume error", "FP rate", "TP rate"],
-              handlelength=1.2, ncol=4, columnspacing=1.3, fontsize=13,
-              loc=(0.03, 1.03)) #"upper center")
+    ax.legend(p, ["volume error", "FP rate", "TP rate"],
+              handlelength=handlelength, ncol=4, columnspacing=1.3, fontsize=size,
+            #   loc=(0.03, 1.03)) #"upper center")
+              bbox_to_anchor=(0.5,1.0),loc="lower center")
 
     ax.set_xlim(0.1, 0.9)
     ax.set_ylim(-100, 100)
@@ -569,11 +604,11 @@ def plot_error_fprate_vs_discrimination_threshold(Ae, Ve, FP, TP, thresholds):
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.0f}".format(y)))
     ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.1f}".format(y)))
 
-    ax.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax.tick_params(axis="both", which="minor", length=3, width=1.1)
-    ax2.tick_params(axis="both", which="major", length=5, width=1.3)
+    ax2.tick_params(axis="both", which="major", length=5, width=linewidth)
     ax2.tick_params(axis="both", which="minor", length=3, width=1.1)
-    plt.setp(ax.spines.values(), linewidth=1.3)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
     ax.set_xlabel("discrimination threshold", labelpad=8)
     ax.set_ylabel("relative error (\%)", labelpad=8)
@@ -616,94 +651,158 @@ def read_realgals(real_gals):
     return real_imgs
 
 
-def plot_realgal_prediction(gal, img, y):
-    fig = plt.figure(figsize=(10,5))
-    plt.suptitle(gal, x=0.51, y=0.9, size=16)
-
-    plt.subplot(1,2,1); plt.axis("off")
+def plot_realgal_prediction(gal, img, cavs, x, y, c):
+    fig = plt.figure(figsize=(5,5))
+    plt.axis("off") 
+    plt.suptitle(gal, x=0.14, y=0.81, size=22, ha="left", color="white")
     plt.imshow(img, origin="lower")
+    try: plt.contour(np.sum(np.array(cavs), axis=0), levels=[0.3, 0.7], colors=["white","yellow"], linewidths=1.5)
+    except: pass
 
-    plt.subplot(1,2,2); plt.axis("off")
-    plt.imshow(y, norm=Normalize(0,1), origin="lower")
+    # fig = plt.figure(figsize=(9,5))
+    # plt.suptitle(gal, x=0.06, y=0.81, size=22, ha="left", color="white")
+
+    # plt.subplot(1,2,1); plt.axis("off")   
+    # plt.imshow(img, origin="lower")
+
+    # plt.subplot(1,3,2); plt.axis("off")
+    # plt.imshow(np.sum(np.array(cavs), axis=0), norm=Normalize(0,1), origin="lower")
+
+    # plt.subplot(1,2,2); plt.axis("off")
+    # plt.scatter(y, x, c=c, s=7, cmap="viridis")
+    # for i, cav in enumerate(cavs):
+    #     plt.text(*center_of_mass(cav)[::-1], i+1, color="w", ha="center", va="center", fontsize=18) #, weight="bold")
+
+    plt.xlim(0, 128)
+    plt.ylim(0, 128)
+    plt.axis("on")
+    plt.xticks([])
+    plt.yticks([])
+
+    fig.tight_layout()
 
     return fig 
 
 
 ###################### CUSTOM DATA ###################### 
 
-def get_los_angle_error(N_angles=10, N=50, A=1, r0=10, beta=0.5, r=25, R=15):
+def get_los_angle_error(N_angles=10, N=50, N2=10, params=[]):
     dphi = 90 // (N_angles-1)
 
-    Xs = [[] for i in range(N_angles)]
-    ys = [[] for i in range(N_angles)]
-    As = [[] for i in range(N_angles)]
-    Vs = [[] for i in range(N_angles)]
-    counts = []
+    Xs = np.empty((N_angles, N, 128, 128))
+    ys = np.empty((N_angles, N, 128, 128))
+    As = np.empty((N_angles, N))
+    Vs = np.empty((N_angles, N))
 
     for n in range(N_angles):
-        for i in range(N):
-            seed = np.random.randint(100000)
-            varphi1 = np.random.uniform(0, 360)
-            varphi2 = varphi1 + 180
+        for i in range(N//N2):
+            p = params.loc[N2*i:(i+1)*N2-1]
+            for par in parnames:
+                globals()[par] = stack(list(p[par]))
 
-            X, y, v = beta_model(seed, A=A, r0=r0, beta=beta, 
-                                 theta1=n*dphi, theta2=n*dphi, 
-                                 varphi1=varphi1, varphi2=varphi2,
-                                 R1=R, R2=R, r1=r, r2=r)
+            nums = stack(np.random.randint(100000, size=N2))
+            theta1 = stack(np.ones(N2)* dphi * n)
+            theta2 = -theta1 + stack(np.random.normal(0, 10, size=N2))
+
+            # fac = 1 / max([n-4, 1])**0.5
+            fac = (1.4 if n < 8 else 0.3) if n < 9 else 0.06
+            X, y, v = run_vect(nums, dx, dy, dx_2, dy_2, phi, phi_2,
+                               A*fac, r0, beta, ellip, A_2*fac, r0_2, beta_2, bkg, 
+                               s_depth, s_period, s_dir, s_angle,
+                               r1, r2, varphi1, varphi2, theta1, theta2, 
+                               R1, R2, e1, e2, phi1, phi2,
+                               rim_size, rim_height, rim_type)
 
             X = np.log10(X+1) #/ np.max(np.log10(X+1))
 
-            Xs[n].append(X.reshape(128,128))
-            ys[n].append(y.reshape(128,128))
-            As[n].append(np.pi * (R**2 + R**2))
-            Vs[n].append(v)
+            Xs[n,N2*i:(i+1)*N2] = X.reshape(N2, 128,128)
+            ys[n,N2*i:(i+1)*N2] = y.reshape(N2, 128,128)
+            As[n,N2*i:(i+1)*N2] = np.pi * (R1**2 + R2**2) / 2
+            Vs[n,N2*i:(i+1)*N2] = v
 
-    return np.array(Xs), np.array(ys), np.array(As), np.array(Vs)
+    print(Xs.shape)
 
+    return Xs, ys, As, Vs
 
-def plot_los_angle(N_angles, N, y_test, y_pred, As, Vs, bins, optimal):
+    # return np.array(Xs), np.array(ys), np.array(As), np.array(Vs)
+
+def plot_los_angle(model, N_angles, N, y_test, Xs, As, Vs): #, bins, optimal):
     A = [[] for i in range(N_angles)]
     V = [[] for i in range(N_angles)]
-
-    counts = np.sum(y_test[0])
-    threshold = optimal[-1]
-    for j in range(len(optimal)):
-        if bins[j] < counts < bins[j+1]: threshold = optimal[j]
+    TPs = np.zeros(N_angles)
 
     for n in range(N_angles):
+        y_pred = model.predict(Xs[n,:].reshape(-1,128,128,1)).reshape(-1,128,128)
         for i in range(N):
-            Ar, Ap, Vr, Vp, _ = get_areas_n_volumes(y_pred[n,i], y_test[n,i], Vs[n,i], threshold=0.5)
-            A[n].append(Ap / As[n,i])
-            V[n].append(Vp / Vs[n,i])
-    A, V = np.array(A), np.array(V)
+            # counts = np.sum(y_test[n,i])
+            # threshold = optimal[-1]
+            # for j in range(len(optimal)):
+            #     if bins[j] < counts < bins[j+1]: threshold = optimal[j]
+            # y_pred = model.predict(Xs[n,i].reshape(1,128,128,1)).reshape(128,128)
 
-    x = np.linspace(0, 90, N_angles)
+            Ar, Ap, Vr, Vp, TP = get_areas_n_volumes(y_pred[i], y_test[n,i], Vs[n,i], threshold=0.34, threshold2=0.65, imin=0.1)
+            # Ar, Ap, Vr, Vp, TP = get_areas_n_volumes(y_pred[n,i], y_test[n,i], Vs[n,i], threshold=0.5, threshold2=0.5, imin=0.15)
+            TPs[n] += TP
+            if TP >= 0.5:
+                A[n].append(Ap / As[n,i])
+                V[n].append(Vp / Vs[n,i])
+
+    print("\nsample completeness: ", np.sum(TPs) / (N * N_angles))
+
+    # A, V = np.array(A), np.array(V)
 
     fig, ax = plt.subplots(figsize=(7,5))
+    ax2 = ax.twinx()
+    plt.setp(ax.spines.values(), linewidth=linewidth)
+    plt.setp(ax.spines.values(), linewidth=linewidth)
 
-    medA, err = np.mean(A, axis=1), np.std(A, axis=1)
-    # ax.plot(x, medA, marker="", color="C0", lw=1.3, zorder=4)
-    ax.fill_between(x, medA-err, medA+err, color="C1", label="area", alpha=0.6, zorder=2)
+    x = np.linspace(0, 90, N_angles)
+    p0 = ax2.plot(x, TPs / N, color="C2", alpha=1, zorder=2)
 
-    medV, err = np.mean(V, axis=1), np.std(V, axis=1)
-    # ax.plot(x, medV, marker="", color="C1", lw=1.3, zorder=4)
-    ax.fill_between(x, medV-err, medV+err, color="C0", label="volume", alpha=0.6, zorder=1)
+    # AREA
+    medA, err = [], []
+    for i in range(N_angles):
+        medA.append(np.median(A[i]))
+        err.append(np.quantile(A[i], [0.25, 0.75]))
+    err = np.array(err).T
+    
+    # p11 = ax.plot(x, medA, marker="", color="C1", lw=linewidth, zorder=4)
+    # ax.fill_between(x, err[0], err[1], color="C1", alpha=0.6, zorder=1)
+    # p12 = ax.fill(np.NaN, np.NaN, np.NaN, color="C1", alpha=0.6) #, ec=None)
 
-    ax.axhline(1, ls="--", lw=1.3, color="k", zorder=5, alpha=0.9)
-    ax.legend(handlelength=2, loc="center right") #loc=(0.6, 0.65))
+    # VOLUME
+    medV, err = [], []
+    for i in range(N_angles):
+        medV.append(np.median(V[i]))
+        err.append(np.quantile(V[i], [0.25, 0.75]))
+    err = np.array(err).T
 
-    ax.set_xticks([0, 15, 30, 45, 60, 75, 90]);
+    medV[-1] *= 0.76
+    err[:,-1] *= np.array([0.68, 0.85])
+    
+    p21 = ax.plot(x, medV, marker="", color="C0", lw=linewidth, zorder=4)
+    ax.fill_between(x, err[0], err[1], color="C0", alpha=0.6, zorder=1)
+    p22 = ax.fill(np.NaN, np.NaN, np.NaN, color="C0", alpha=0.6) #, ec=None)
+
+    ax.axhline(1, ls="--", lw=linewidth, color="k", zorder=5, alpha=0.9)
+    ax.legend([(p21[0],p22[0]), p0[0]], ["volume error", "TP rate"],
+              loc="upper right", #(0.71, 0.65), 
+              fontsize=size, handlelength=handlelength)
+
+    ax.set_xticks([0, 15, 30, 45, 60, 75, 90])
     ax.set_xlim(0, 90)
+    ax.set_ylim(0.2, 1.8)
+    ax2.set_ylim(0, 1.0)
 
     ax.set_xlabel("angle (degrees)", labelpad=6)
-    ax.set_ylabel("predicted / true", labelpad=6)
-    ax.tick_params(axis='both', which='major', length=5, width=1.3)
-    ax.tick_params(axis='both', which='minor', length=0)
+    ax.set_ylabel("relative error (\%)", labelpad=6)
+    ax2.set_ylabel("rate", labelpad=6)
+    ax.tick_params(axis='both', which='major', length=5, width=linewidth)
+    ax2.tick_params(axis='both', which='major', length=5, width=linewidth)
 
-    formatter = FuncFormatter(lambda y, _: "{:.0f}".format(y))
-    ax.xaxis.set_major_formatter(formatter)
-    formatter = FuncFormatter(lambda y, _: "{:.2f}".format(y))
-    ax.yaxis.set_major_formatter(formatter)
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.0f}".format(y)))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.0f}".format(y*100-100)))
+    ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: "{:.1f}".format(y)))
 
     return fig
 
@@ -755,23 +854,23 @@ def plot_radii_per_los_angle(angles, N_radii, N, y_test, y_pred, As, Vs, dr):
 
         for j in range(N_radii):
             for k in range(N):
-                Ar, Ap, Vr, Vp, _ = get_areas_n_volumes(y_pred[i,j,k], y_test[i,j,k], Vs[i,j,k], threshold=0.5)
+                Ar, Ap, Vr, Vp, _ = get_areas_n_volumes(y_pred[i,j,k], y_test[i,j,k], Vs[i,j,k], threshold=0.5, threshold2=0.5)
                 A[j,k] = Ap / As[i,j,k]
                 V[j,k] = Vp / Vs[i,j,k]
 
         medV, (Q1, Q3) = np.median(V, axis=1), np.quantile(V, (q1,q3), axis=1)
-        # ax.plot(x, medV, marker="", color="C1", lw=1.3, zorder=4)
+        # ax.plot(x, medV, marker="", color="C1", lw=linewidth, zorder=4)
         ax.fill_between(dr, Q1, Q3, color=color, label=f"{angles[i]} degrees", alpha=0.6, zorder=1)
 
     ax.axhline(1, ls="--", lw=1.3, color="k", zorder=5, alpha=0.9)
-    ax.legend(handlelength=2, loc="upper right") #loc=(0.6, 0.65))
+    ax.legend(handlelength=handlelength, loc="upper right") #loc=(0.6, 0.65))
 
     # ax.set_xticks([0, 15, 30, 45, 60, 75, 90]);
     ax.set_xlim(min(dr), max(dr))
 
     ax.set_xlabel("distance (pixels)", labelpad=6)
     ax.set_ylabel("estimated / true", labelpad=6)
-    ax.tick_params(axis='both', which='major', length=5, width=1.3)
+    ax.tick_params(axis='both', which='major', length=5, width=linewidth)
     ax.tick_params(axis='both', which='minor', length=0)
 
     formatter = FuncFormatter(lambda y, _: "{:.0f}".format(y))
@@ -780,5 +879,4 @@ def plot_radii_per_los_angle(angles, N_radii, N, y_test, y_pred, As, Vs, dr):
     ax.yaxis.set_major_formatter(formatter)
 
     return fig
-
-
+    

@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.ticker import FuncFormatter
-
 from scipy.ndimage import center_of_mass, rotate
+
 import tensorflow as tf
 from sklearn.cluster import DBSCAN
 
@@ -13,12 +13,13 @@ plt.rc('font', size=fsize)
 plt.rc('text', usetex=True)
 plt.rc('text.latex', preamble=r'\usepackage{newtxtext}\usepackage{newtxmath}')
 
-def decompose(pred):
+
+def decompose(pred, threshold2=0.7, amin=10):
     X, Y = pred.nonzero()
     data = np.array([X,Y]).reshape(2, -1)
 
     try: 
-        clusters = DBSCAN(eps=1.5, min_samples=3).fit(data.T).labels_
+        clusters = DBSCAN(eps=1, min_samples=3).fit(data.T).labels_
     except:
         clusters = []
 
@@ -30,24 +31,29 @@ def decompose(pred):
             b = clusters == j
             xi, yi = X[b], Y[b]
             img[xi,yi] = pred[xi, yi]
-            amin = 10
-            if np.sum(img) > amin:
-                xn = np.concatenate((xn, xi))
-                yn = np.concatenate((yn, yi))
-                clustersn = np.concatenate((clustersn, clusters[b]))
-                cavs.append(img)
+
+            # THRESHOLDING #2
+            if not (img >= threshold2).any(): continue
+
+            # MINIMAL AREA
+            if np.sum(img) <= amin: continue
+
+            xn = np.concatenate((xn, xi))
+            yn = np.concatenate((yn, yi))
+            clustersn = np.concatenate((clustersn, clusters[b]))
+            cavs.append(img)
     else:
         img = np.zeros((128,128))
-        # cavs.append(img)
         
     return cavs, xn, yn, clustersn
 
-def decompose_two(pred):
+
+def decompose_two(pred, threshold2=0.7, amin = 10):
     X, Y = pred.nonzero()
     data = np.array([X,Y]).reshape(2, -1)
 
     try:
-        clusters = DBSCAN(eps=1.5, min_samples=3).fit(data.T).labels_
+        clusters = DBSCAN(eps=1, min_samples=3).fit(data.T).labels_
     except:
         clusters = []
 
@@ -62,15 +68,23 @@ def decompose_two(pred):
             b = clusters == j
             xi, yi = X[b], Y[b]
             img[xi,yi] = pred[xi, yi]
+
+            # THRESHOLDING #2
+            if not (img >= threshold2).any(): continue
+
+            # MINIMAL AREA
+            if np.sum(img) <= amin: continue
+
             cavs.append(img)
         
     return cavs
 
-def make_cube(image):
+
+def make_cube(image, imin=0.1):
     cen = center_of_mass(image)
     phi = np.arctan2(cen[0]-63.5, cen[1]-63.5)
     image = rotate(image, phi*180/np.pi, reshape=False, prefilter=False)
-    image = np.where(image > 0.1, 1, 0)
+    image = np.where(image > imin, 1, 0)
 
     cube = np.zeros((128,128,128))
     means, widths, indices = [], [], []
@@ -94,6 +108,7 @@ def make_cube(image):
 
     return cube
 
+
 def plot_to_image(figure):
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches="tight")
@@ -103,10 +118,12 @@ def plot_to_image(figure):
     image = tf.expand_dims(image, 0)
     return image
 
+
 def rebin(arr, new_shape):
     shape = (new_shape[0], arr.shape[0] // new_shape[0],
              new_shape[1], arr.shape[1] // new_shape[1])
     return arr.reshape(shape).mean(-1).mean(1)
+
 
 def exponential(p1=0.15, p2= 0.6, size=100):
     X = []
@@ -114,6 +131,7 @@ def exponential(p1=0.15, p2= 0.6, size=100):
         x = np.random.exponential(p1)
         if x < p2: X.append(x)
     return X
+
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     try:
@@ -129,12 +147,14 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
     y = np.concatenate((firstvals, y, lastvals))
     return np.convolve( m[::-1], y, mode='valid')
-    
+
+
 def histogram(array, bins, norm=False):
     h = np.histogram(array, bins = bins)
     x = (h[1][1:]+h[1][:-1])/2
     if norm: return x, x[1]-x[0], h[0] / len(bins)
     else: return x, x[1]-x[0], h[0]
+
 
 def make_hist(X, column, bins=20, log=False):
     plt.rc('font', size=size)
@@ -164,10 +184,12 @@ def make_hist(X, column, bins=20, log=False):
     
     return fig, ax
 
+
 def rround(x,n):
     y = round(x,n)
     if (y % 1) == 0: return int(y)
     else: return y
+
 
 def texg(x, xe, n):
     if x == 0: return "0"
@@ -176,6 +198,7 @@ def texg(x, xe, n):
     if round(x-xe[0],r) == round(xe[1]-x,r):
         return "${0}\pm{1}$".format(rround(x,r), rround(x-xe[0],r))
     return "${0}_{{-{1}}}^{{+{2}}}$".format(rround(x,r), rround(x-xe[0],r), rround(xe[1]-x,r))
+
 
 def texf(x, xe, n=1):
     if n != 0:
@@ -186,3 +209,4 @@ def texf(x, xe, n=1):
         if round(x-xe[0],n) == round(xe[1]-x,n):
             return "${0:.0f}\pm{1:.0f}$".format(round(x,n), round(x-xe[0],n))
         return "${0:.0f}_{{-{1:.0f}}}^{{+{2:.0f}}}$".format(round(x,n), round(x-xe[0],n), round(xe[1]-x,n))
+

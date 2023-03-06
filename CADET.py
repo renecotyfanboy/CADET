@@ -22,10 +22,10 @@ from tensorflow.keras.models import load_model
 # set_virtual_device_configuration(gpus[0], [VirtualDeviceConfiguration(memory_limit=1000)])
 # print(len(gpus), "Physical GPUs,")
 
-# DISABLES GPU & RUNS ON CPU
+# DISABLES GPU FOR TENSORFLOW LIBRARY
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-path_model = "../CADET_new.hdf5"
+path_model = "CADET.hdf5"
 model = load_model(path_model)
 
 
@@ -140,6 +140,7 @@ def make_cube(image, galaxy, scale, cavity):
 
 
 def CADET(galaxy, scales=[1,2,3,4], th1=0.4, th2=0.7):
+    # MAKE DIRECTORIES
     os.system(f"mkdir -p {galaxy} {galaxy}/predictions {galaxy}/cubes {galaxy}/decomposed")
 
     N = len(scales)
@@ -147,7 +148,8 @@ def CADET(galaxy, scales=[1,2,3,4], th1=0.4, th2=0.7):
 
     for i,scale in enumerate(scales):
         data, wcs = regrid(f"{galaxy}.fits", scale)
-        image = np.log10(data+1) / np.max(np.log10(data+1))
+        image = np.log10(data+1) #/ np.max(np.log10(data+1))
+        image = np.log10(image+1) / np.max(np.log10(image+1))
 
         # ROTATIONAL AVERAGING
         y_pred = 0

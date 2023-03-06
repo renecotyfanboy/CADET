@@ -1,13 +1,7 @@
 from jax import device_put
 from jax import random
 from jax import jit, vmap
-from jax.scipy.signal import convolve2d
 from jax.numpy import asarray, stack, arctan, array, arange, cos, deg2rad, dot, exp, float32, int16, floor, linspace, log10, min, max, meshgrid, ones, pi, save, sqrt, sin, sum, where, zeros
-from numpy import rot90
-
-from astropy.io import fits
-# psfs = array([psf, rot90(psf,1), rot90(psf,2), rot90(psf,3)])
-# psf = array(fits.getdata("psf.fits"))
 
 t = float32
 shape = (128,128,128)
@@ -17,21 +11,22 @@ points = meshgrid(R, R, R)
 points = array(points, dtype=t).reshape(3, -1)[::-1]
 points = device_put(points)
 
+
 @jit
-def create_rotation_matrix(ax, ay, az):
-    Rx = array([[1, 0, 0],
-                [0, cos(ax), -sin(ax)],
-                [0, sin(ax), cos(ax)]], dtype=t)
+def create_rotation_matrix(a, b, c):
+    rot_x = array([[1, 0, 0],
+                  [0, cos(a), -sin(a)],
+                  [0, sin(a), cos(a)]], dtype=t)
 
-    Ry = array([[cos(ay), 0, sin(ay)],
-                [0, 1, 0],
-                [-sin(ay), 0, cos(ay)]], dtype=t)
+    rot_y = array([[cos(b), 0, sin(b)],
+                  [0, 1, 0],
+                  [-sin(b), 0, cos(b)]], dtype=t)
 
-    Rz = array([[cos(az), -sin(az), 0],
-                [sin(az), cos(az), 0],
-                [0, 0, 1]], dtype=t)
+    rot_z = array([[cos(c), -sin(c), 0],
+                  [sin(c), cos(c), 0],
+                  [0, 0, 1]], dtype=t)
 
-    return dot(Rz, dot(Ry, Rx))
+    return dot(rot_z, dot(rot_y, rot_x))
 
 @jit
 def create_ellipsoidal_grid(center, radii, angle):
@@ -39,10 +34,10 @@ def create_ellipsoidal_grid(center, radii, angle):
 
     rotated = dot(rot, points).T
 
-    grid_center = array(center) - 0.5 * array(shape[::-1], dtype=t)
-    grid_center = dot(rot, grid_center)
+    center = array(center) - 0.5 * array(shape[::-1], dtype=t)
+    center = dot(rot, center)
 
-    dR = (rotated - grid_center)**2 / radii**2
+    dR = (rotated - center)**2 / radii**2
     nR = sum(dR, axis=1).reshape(shape)
 
     return sqrt(nR)
@@ -58,11 +53,11 @@ def create_ellipsoidal_shell(center, radii1, radii2, angle):
 
     rotated = dot(rot, points).T
 
-    grid_center = array(center) - 0.5 * array(shape[::-1], dtype=t)
-    grid_center = dot(rot, grid_center)
+    center = array(center) - 0.5 * array(shape[::-1], dtype=t)
+    center = dot(rot, center)
 
-    dR1 = (rotated - grid_center)**2 / radii1**2
-    dR2 = (rotated - grid_center)**2 / radii2**2
+    dR1 = (rotated - center)**2 / radii1**2
+    dR2 = (rotated - center)**2 / radii2**2
     
     nR1 = sum(dR1, axis=1).reshape(shape)
     nR2 = sum(dR2, axis=1).reshape(shape)
@@ -187,7 +182,6 @@ def beta_model(n=0, dx=0, dy=0, dx_2=0, dy_2=0, phi=0, phi_2=0,
     binary_mask = where(mask > 0, 1, 0)
 
     image = where(s_depth, apply_sloshing(image, s_period, s_angle, s_depth, s_dir), image)
-    # image = convolve2d(image, psf, mode='same')
 
     key = random.PRNGKey(n)
     noisy = random.poisson(key, image, shape=(128,128))
