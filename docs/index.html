@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <title>CADET</title>
-<link rel="icon" href="figures/logo.png">
+<link rel="icon" href="figures/CADET.png">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
 
@@ -21,8 +21,9 @@
 <a id="menu" href="training.html">Training</a>
 <!-- <a id="menu" href="requirements.html">Requirements</a> -->
 <a id="menu" href="usage.html">Usage</a>
-<a id="menu" href="example.html">Example</a>
-<a id="menu" href="CADET.html">CADET</a>
+<a id="menu" href="results.html">Results</a>
+<!-- <a id="menu" href="example.html">Example</a> -->
+<!-- <a id="menu" href="CADET.html">CADET</a> -->
 </div>
 
 <main>
@@ -32,7 +33,7 @@
 <h1>Overview</h1>
 
 <p>
-CADET is a machine learning pipeline trained for identifying surface 
+<b><em>CADET_size</em></b> is a machine learning pipeline trained for identifying surface 
 brightness depressions (so-called <em>X-ray cavities</em>) on noisy <em>Chandra</em> 
 images of elliptical galaxies. The pipeline consists of a convolutional 
 neural network trained for producing pixel-wise cavity predictions, 
@@ -60,29 +61,65 @@ Density-Based Spatial Clustering of Applications with Noise (DBSCAN,
 
 <br>
 
+<!-- <h2>Network architecture</h2>
+
 <p>
-The convolutional neural network was trained on artificial images which were 
-produced from generated 3D beta models 
-(<a target="_blank" href="https://ui.adsabs.harvard.edu/abs/1978A%26A....70..677C/abstract">Cavaliere et al. 1978</a>) 
-into which we randomly inserted ellipsoidal cavities. The parameter ranges and 
-distributions used for generating models of galaxies and X-ray cavities were 
-estimated from the measurements of nearby galaxies (for more info see the 
-<a target="_blank" href="https://github.com/tomasplsek/CADET/blob/main/pdfs/diploma_thesis.pdf">Diploma thesis</a>). 
-Besides the cavities, we added also other typical features such as central point sources, 
-bright rims around cavities and also antisymmetric spiral perturbations resembling gas 
-sloshing (see image below) to imitate the gas distribution of real galaxies. The produced models were summed 
-into 2D images a noised using Poisson statistics to resemble real <em>Chandra</em>-like images. 
-The corresponding labels were produced similarly by summing the ellipsoidal cavity masks 
-into 2D images and binning them to contain either ones (inside the cavity) and zeros (outside of it).
+
+On the input of the CNN, there is a single channel 128x128 image. Since radial profiles of β-models in 
+both real and simulated images are rather exponential, we transform the input images by a decimal 
+logarithm (the value of each pixel was raised by one to avoid calculating the logarithm of zero).
+Before the images are processed by the first Inception-like convolutional block, they are further 
+normalized in mini-batches by a batch-normalization layer within the convolutional neural network.
+
+<br class="longbr">
+
+The architecture of the convolutional neural network is similar to that developed by Fort2017 and 
+is composed of a series of 5 convolutional blocks. Each block resembles an Inception-like layer (Szegedy2015) 
+as it applies a set of multiple parallel 2D convolutions with various kernel sizes and concatenates 
+their outputs. Inception layers within the first 4 blocks consist of convolutional layers with 32 of 1x1 
+filters, 32 of 3x3 filters, 16 of 5x5 filters, 8 of 7x7 filters, 4 of 9x9 filters, 2 of 11x11 filters, and one 13x13 filter. 
+The output of each convolutional layer within the Inception-like layer is activated by Rectified Linear 
+Unit (ReLU; Fukushima1975) activation function, which brings non-linear elements into the network, 
+and then normalized by batch normalization (Ioffe2015). Each Inception layer is then followed by a 
+2D convolutional layer with 32 or 64 of 1x1 filters, which is introduced mainly due to dimensionality reduction.
+The output of this convolutional layer is also activated using the ReLU activation function and batch-normalized. 
+The 1x1 convolutional layers are, in order to prevent overfitting, followed by a dropout layer, where 
+the dropout rate was varied as a hyper-parameter.
+
+<br class="longbr">
+
+The convolutional neural network is ended by a final block, which is as well composed as an Inception-like 
+layer but differs from the previous blocks by the numbers and sizes of individual 2D convolutional 
+filters (8 of 8x8 filters, 4 of 16x16 filters, 2 of 32x32 filters, and one 64x64 filter) and also 
+by the activation function of the last 1x1 convolutional filter. Since the output of the network is 
+intended to be a prediction of whether a corresponding pixel belongs to a cavity (value 1) or not (value 0), 
+the activation function of the final layer was set to be the <em>sigmoid</em> function, which 
+outputs real numbers in the range between 0 and 1.
+
+<br class="longbr">
+
+In total, the network has 563 146 trainable parameters and the size of the model is 7.4 MB. Weights 
+of individual 2D convolutional layers were generated using He initialization (He2015) and biases 
+were initialized with low but non-zero values (0.01). 
+
+<br class="longbr">
+
+On the output of the CNN, there is a pixel-wise prediction of the same shape as the input image 
+with a value in each pixel ranging from 0 to 1, which expresses whether that pixel corresponds to a cavity or not.
+The pixel-wise prediction is then decomposed into individual X-ray cavities using the DBSCAN clustering 
+algorithm. Before the decomposition, a pair of discrimination thresholds are applied for the pixel-wise 
+prediction excluding low-significance regions and keeping only solid cavity predictions while properly 
+estimating their areas and volumes.
+
 </p>
 
 <br>
 
-<img src="figures/model.png" title="Artificial data" style="width: 100%;">
+<img src="figures/netron_full.png" title="Network architecture" style="width: 100%;"> -->
 
 <br>
 
-<p>
+<!-- <p>
 We have trained two separate networks using different sets of artificial images:
 one purely with galaxies containing cavities (<b><em>CADET_size</em></b>) and the second with
 50 percent of galaxies lacking any cavities (<b><em>CADET_search</em></b>). The first network
@@ -102,7 +139,7 @@ and the minimized loss function was the pixel-wise <b><em>binary cross-entropy</
 The pipelines were trained for 5 epochs with 8 images per batch while using all of 
 the training images in each epoch. The training was performed using an NVIDIA GPU 
 type GeForce RTX 2080 SUPER (8 GiB) and lasted approximately 6 hours for both pipelines.
-</p>
+</p> -->
 
 <br>
 

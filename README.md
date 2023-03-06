@@ -28,26 +28,26 @@ If you want to re-train the network from scratch or generate training images, an
 
 The ***CADET*** pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixels are higher than or equal to 1. For images with many point sources, they should be filled with surrounding background level using Poisson statistics ([dmfilth](https://cxc.cfa.harvard.edu/ciao/ahelp/dmfilth.html) within [CIAO](https://cxc.harvard.edu/ciao/)).
 
-Convolutional part of the ***CADET*** pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore being cropped to a size specified by parameter scale (size = scale * 128 pixels) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used) and images should be centred at the centre of the galaxy. The re-binning is performed using *Astropy* and *Numpy* libraries and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) within [CIAO](https://cxc.harvard.edu/ciao/) and applying ***CADET*** model manually (see Convolutional part).
+Convolutional part of the ***CADET*** pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore being cropped to a size specified by parameter scale (size = scale * 128 pixels) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used) and images should be centred at the centre of the galaxy. The re-binning is performed using *Astropy* and *Numpy* libraries and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) and applying ***CADET*** model manually (see Convolutional part).
 
 Before being decomposed by the DBSCAN algorithm, pixel-wise predictions produced by the convolutional part of the ***CADET*** pipeline need to be further thresholded. In order to simultaneously calibrate the volume error and false positive rate, we introduced two discrimination thresholds (for more info see [Plšek et al. 2023]()) and their default values are 0.4 and 0.65, respectively. Nevertheless, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
 
 The ***CADET*** pipeline is composed as a self-standing Python script (`CADET.py`), which can be run by simply calling it from a terminal using following arguments:\
-`galaxy` - string, name of the source (name of fits file)\
+`filename` - string, name of the fits file\
 `scales` - list, list of size scales used to crop input images, optional (default: [1,2,3,4])\
 `threshold1` - float, between 0 and 1, calibrates volume error, optional (default: 0.4)\
 `threshold2` - float, between 0 and 1, calibrates false positive rate, optional (default: 0.65)
 
 ```console
-$ python3 CADET.py galaxy [scales] [threshold1] [threshold2]
+$ python3 CADET.py filename [scales] [threshold1] [threshold2]
 ```
 
 Example:
 
 ```console
-$ python3 CADET.py NGC5813
-$ python3 CADET.py NGC5813 [1,2,3,4,5]
-$ python3 CADET.py NGC5813 [1,2,3,4,5] 0.5 0.9
+$ python3 CADET.py NGC5813.fits
+$ python3 CADET.py NGC5813.fits [1,2,3,4,5]
+$ python3 CADET.py NGC5813.fits [1,2,3,4,5] 0.5 0.9
 ```
 
 The script loads a FITS file specified by `galaxy` argument (`f"{galaxy}.fits"`) located in the same folder as the `CADET.py` script, creates a folder of the same name, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.

@@ -140,6 +140,7 @@ def make_cube(image, galaxy, scale, cavity):
 
 
 def CADET(galaxy, scales=[1,2,3,4], th1=0.4, th2=0.7):
+    galaxy = galaxy.replace(".fits", "")
     # MAKE DIRECTORIES
     os.system(f"mkdir -p {galaxy} {galaxy}/predictions {galaxy}/cubes {galaxy}/decomposed")
 
@@ -148,8 +149,7 @@ def CADET(galaxy, scales=[1,2,3,4], th1=0.4, th2=0.7):
 
     for i,scale in enumerate(scales):
         data, wcs = regrid(f"{galaxy}.fits", scale)
-        image = np.log10(data+1) #/ np.max(np.log10(data+1))
-        image = np.log10(image+1) / np.max(np.log10(image+1))
+        image = np.log10(data+1)
 
         # ROTATIONAL AVERAGING
         y_pred = 0
@@ -175,9 +175,19 @@ def CADET(galaxy, scales=[1,2,3,4], th1=0.4, th2=0.7):
         ax.imshow(image, origin="lower", cmap="viridis", zorder=1) #, norm=LogNorm())
 
         # PLOT SCALE LINE
-        pix1 = 1 / 128 / 0.492 / scale
-        ax.text(0.5, 0.04, f"20 arcsec", va="bottom", ha="center", color="w", transform=ax.transAxes, zorder=3)
-        ax.plot([0.5-20*pix1/2, 0.5+20*pix1/2], [0.03, 0.03], "-", lw=1.3, color="w", transform=ax.transAxes, zorder=3)
+        x0, y0 = 0.2, 0.085
+        arcsec = 20 * scale
+        pix1 = 1 / 128 / 0.492 / scale * arcsec / 2
+        pixels = 128 * scale
+
+        # SCALE LINE
+        ax.plot([x0-pix1, x0+pix1], [y0, y0], "-", lw=1.3, color="w", transform=ax.transAxes, zorder=3)
+
+        # SCALE IN ARCSEC
+        ax.text(x0, y0+0.01, f"{arcsec:.0f} arcsec", va="bottom", ha="center", color="w", transform=ax.transAxes, zorder=3, fontsize=12)
+
+        # SIZE IN PIXELS
+        ax.text(x0, y0-0.015, f"{pixels:.0f} pixels", va="top", ha="center", color="w", transform=ax.transAxes, zorder=3, fontsize=12)
 
         ax.set_xticks([])
         ax.set_yticks([])
