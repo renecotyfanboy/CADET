@@ -46,12 +46,11 @@ Example:
 
 ```console
 $ python3 CADET.py NGC5813.fits
-$ python3 CADET.py NGC5813.fits [1,2,3,4,5]
-$ python3 CADET.py NGC5813.fits [1,2,3,4,5] 0.5 0.9
+$ python3 CADET.py NGC5813.fits [1,2,3,4]
+$ python3 CADET.py NGC5813.fits [1,2,3,4] 0.5 0.9
 ```
 
-The script loads a FITS file specified by `galaxy` argument (`f"{galaxy}.fits"`) located in the same folder as the `CADET.py` script, creates a folder of the same name, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.
- <!-- and a TXT file containing calculated cavity areas and volumes. -->
+The `CADET.py` script loads a FITS file located in the same folder which is specified by the `filename` argument, it creates a folder of the same name as the FITS file, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS  format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.
 
 <!-- The volumes of X-ray cavities are calculated under the assumption of symmetry along the direction from the galactic centre into the centre of the cavity (calculated as *center of mass*). The cavity depth in each point on that line is assumed to be equal to its width (perpendicular to that line). Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation) -->
 
@@ -120,7 +119,7 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 
 ## How to cite (!!!NOT-PUBLISHED YET!!!)
 
-***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the ***CADET***  pipeline in your research, please cite the following paper:
+The ***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the ***CADET***  pipeline in your research, please cite the following paper:
 
 ```
 @ARTICLE{2023MNRAS,

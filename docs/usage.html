@@ -20,11 +20,8 @@
 <div class="sidenav">
 <a id="menu" href="index.html">Overview</a>
 <a id="menu" href="training.html">Training</a>
-<!-- <a id="menu" href="requirements.html">Requirements</a> -->
 <a style="color: rgb(20, 97, 179);font-weight: bold;" id="menu" href="usage.html">Usage</a>
 <a id="menu" href="results.html">Results</a>
-<!-- <a id="menu" href="example.html">Example</a> -->
-<!-- <a id="menu" href="CADET.html">CADET</a> -->
 </div>
 
 <main>
@@ -32,23 +29,6 @@
 <section>
 
 <h1>Usage</h1>
-
-<!-- <p>The CADET pipeline inputs either raw <em>Chandra</em> images with units of counts 
-(numbers of captured photons) or normalized processed background-subtracted 
-and/or exposure-corrected images. When using flux images for instance, try 
-normalizing them by the lowest pixel value so all pixel values are higher 
-than or equal to unity. The input image is afterwards automatically scaled 
-by a logarithm and normalized by the highest pixel value. Currently only 
-128x128 images are supported, however, an improvement that would enable 
-arbitrarily sized images is under development (so-far the images were cropped 
-and re-binned via ciao_contrib (CIAO 4.13), however, an Astropy version is being developed).
-Both the <b><em>CADET_search</em></b> and <b><em>CADET_size</em></b> pipelines 
-are composed as self-standing scripts. Discrimination threshold for the <b><em>CADET_search</em></b> 
-pipeline was set to 0.9 to suppress false positive detections, while the threshold of the 
-<b><em>CADET_size</em></b> pipeline was set to 0.55 so the predicted volumes are not underestimated 
-nor overestimated (for more info see the <a target="_blank" href="https://github.com/tomasplsek/CADET/blob/main/pdfs/diploma_thesis.pdf">Diploma thesis</a>). 
-However, the thresholds of both pipelines are changeable and can be set to an arbitrary value between 0 and 1.
-The scripts can be run by simply calling (possibly with a threshold parameter - float from 0 to 1): -->
 
 <p>
 The <b><em>CADET</em></b> pipeline inputs either raw <em>Chandra</em> images in units of counts 
@@ -110,17 +90,17 @@ be run by simply calling it from a terminal using following arguments:
 <div class="python_code">
 <code id="python_code">$ python3 CADET.py NGC5813.fits</code>
 <br class="shortbr">
-<code id="python_code">$ python3 CADET.py NGC5813.fits [1,2,3,4,5]</code>
+<code id="python_code">$ python3 CADET.py NGC5813.fits [1,2,3,4]</code>
 <br class="shortbr">
-<code id="python_code">$ python3 CADET.py NGC5813.fits [1,2,3,4,5] 0.5 0.9</code>
+<code id="python_code">$ python3 CADET.py NGC5813.fits [1,2,3,4] 0.5 0.9</code>
 </div>
 
 <br>
 
 <p>
 
-The script loads a FITS file specified by <code>filename</code> argument located in the 
-same folder as the <code>CADET.py</code> script, creates a folder of the same name, 
+The <code>CADET.py</code> script loads a FITS file located in the 
+same folder which is specified by the <code>filename</code> argument, it creates a folder of the same name as the FITS file, 
 and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS 
 format while also properly preserving the WCS coordinates. On the output, there is also a 
 PNG file showing decomposed predictions for individual scales.
