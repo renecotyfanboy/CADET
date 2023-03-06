@@ -118,22 +118,21 @@ Here we present an example of the pipeline being used on real *Chandra* images o
 
 <!-- ![](figures/CADET_size.png) -->
 
-## How to cite
+## How to cite (!!!NOT-PUBLISHED YET!!!)
 
 ***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the ***CADET***  pipeline in your research, please cite the following paper:
 
 ```
-!!!NOT-PUBLISHED YET!!!
 @ARTICLE{2023MNRAS,
        author = {{Pl{\v{s}}ek}, T. and {Werner}, N. and {Topinka}},
-        <!-- title = "{CAvity DEtection Tool (CADET): Pipeline for automatic detection of X-ray cavities in atmospheres of early-type galaxies}",
+        title = "{CAvity DEtection Tool (CADET): Pipeline for automatic detection of X-ray cavities in atmospheres of early-type galaxies}",
       journal = {\mnras},
          year = 2023,
        volume = {},
        number = {},
         pages = {},
           doi = {},
-       eprint = {} -->
+       eprint = {}
 }
 ```
 
