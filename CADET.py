@@ -22,7 +22,7 @@ from tensorflow.keras.models import load_model
 # set_virtual_device_configuration(gpus[0], [VirtualDeviceConfiguration(memory_limit=1000)])
 # print(len(gpus), "Physical GPUs,")
 
-# DISABLES GPU FOR TENSORFLOW LIBRARY
+# DISABLES GPU
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 path_model = "CADET.hdf5"
