@@ -21,9 +21,6 @@ For simple usage of the ***CADET***  pipeline, following libraries are required:
 If you want to re-train the network from scratch or generate training images, an additional library is required:\
 [`jax`](https://github.com/google/jax)
 
-<!-- For cavity significance estimation (`cavity_significance.py`), additional `ciao_contrib` ([CIAO](https://cxc.harvard.edu/ciao/)) library is required.  (We recommend firstly installing CIAO with [Anaconda](https://www.anaconda.com/products/individual) and adding required libraries later. We note, however, that we experienced compatibility issues between CIAO library and GPU-supported versions of Tensorflow and JAX libraries. We therefore recommned installing either CPU-only version of Tensorflow alongside CIAO for simple ***CADET*** usage and significance estimation or GPU-supported Tensorflow and JAX without CIAO for re-training of the network or using separate Anaconda environments for each of these purposes.) -->
-
-
 ## Usage
 
 The ***CADET*** pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixels are higher than or equal to 1. For images with many point sources, they should be filled with surrounding background level using Poisson statistics ([dmfilth](https://cxc.cfa.harvard.edu/ciao/ahelp/dmfilth.html) within [CIAO](https://cxc.harvard.edu/ciao/)).
