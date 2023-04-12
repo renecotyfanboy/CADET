@@ -23,17 +23,17 @@ If you want to re-train the network from scratch or generate training images, an
 
 ## Usage
 
-The ***CADET*** pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or normalized background-subtracted and/or exposure-corrected images. When using e.g. corrected flux images, images should be normalized by the lowest pixel value so all pixels are higher than or equal to 1. For images with many point sources, they should be filled with surrounding background level using Poisson statistics ([dmfilth](https://cxc.cfa.harvard.edu/ciao/ahelp/dmfilth.html) within [CIAO](https://cxc.harvard.edu/ciao/)).
+The ***CADET*** pipeline inputs either raw *Chandra* images in units of counts (numbers of captured photons) or exposure-corrected images. When using exposure-corrected images, images should be normalized by the lowest pixel value so all pixels are higher than or equal to 1. For images with many point sources, they should be filled with surrounding background level using Poisson statistics ([dmfilth](https://cxc.cfa.harvard.edu/ciao/ahelp/dmfilth.html) within [CIAO](https://cxc.harvard.edu/ciao/)).
 
 Convolutional part of the ***CADET*** pipeline can only input 128x128 images. As a part of the pipeline, input images are therefore being cropped to a size specified by parameter scale (size = scale * 128 pixels) and re-binned to 128x128 images. By default, images are probed on 4 different scales (1,2,3,4). The size of the image inputted into the pipeline therefore needs to at least 512x512 pixels (minimal input size differs if non-default scales are used) and images should be centred at the centre of the galaxy. The re-binning is performed using *Astropy* and *Numpy* libraries and can only handle integer binsizes. For floating point number binning, we recommend using [dmregrid](https://cxc.cfa.harvard.edu/ciao/ahelp/dmregrid.html) and applying ***CADET*** model manually (see Convolutional part).
 
-Before being decomposed by the DBSCAN algorithm, pixel-wise predictions produced by the convolutional part of the ***CADET*** pipeline need to be further thresholded. In order to simultaneously calibrate the volume error and false positive rate, we introduced two discrimination thresholds (for more info see [Plšek et al. 2023]()) and their default values are 0.4 and 0.65, respectively. Nevertheless, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
+Before being decomposed by the DBSCAN algorithm, pixel-wise predictions produced by the convolutional part of the ***CADET*** pipeline need to be further thresholded. In order to simultaneously calibrate the volume error and false positive rate, we introduced two discrimination thresholds (for more info see [Plšek et al. 2023]()) and their default values are 0.4 and 0.6, respectively. Nevertheless, both discrimination thresholds are changeable and can be set to an arbitrary value between 0 and 1.
 
 The ***CADET*** pipeline is composed as a self-standing Python script (`CADET.py`), which can be run by simply calling it from a terminal using following arguments:\
 `filename` - string, name of the fits file\
 `scales` - list, list of size scales used to crop input images, optional (default: [1,2,3,4])\
 `threshold1` - float, between 0 and 1, calibrates volume error, optional (default: 0.4)\
-`threshold2` - float, between 0 and 1, calibrates false positive rate, optional (default: 0.65)
+`threshold2` - float, between 0 and 1, calibrates false positive rate, optional (default: 0.6)
 
 ```console
 $ python3 CADET.py filename [scales] [threshold1] [threshold2]
@@ -47,9 +47,9 @@ $ python3 CADET.py NGC5813.fits [1,2,3,4]
 $ python3 CADET.py NGC5813.fits [1,2,3,4] 0.5 0.9
 ```
 
-The `CADET.py` script loads a FITS file located in the same folder which is specified by the `filename` argument, it creates a folder of the same name as the FITS file, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS  format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.
+The `CADET.py` script loads a FITS file specified by the `filename` argument, which is located in the same folder as the main `CADET.py` script. The script creates a folder of the same name as the FITS file, and saves corresponding pixel-wise as well as decomposed cavity predictions into the FITS format while also properly preserving the WCS coordinates. On the output, there is also a PNG file showing decomposed predictions for individual scales.
 
-<!-- The volumes of X-ray cavities are calculated under the assumption of symmetry along the direction from the galactic centre into the centre of the cavity (calculated as *center of mass*). The cavity depth in each point on that line is assumed to be equal to its width (perpendicular to that line). Thereby produced 3D cavity models can be alternatively viewed or stored in the `.npy` format for further use (e.g. cavity energy calculation) -->
+The volumes of X-ray cavities are calculated under the assumption of rotational symmetry along the direction from the galactic centre towards the centre of the cavity (estimated as *center of mass*). The cavity depth in each point along that direction is then assumed to be equal to its width. Thereby produced 3D cavity models are stored in the `.npy` format and can be used for further caclulation (e.g. cavity energy estimationš)
 
 ![](figures/NGC5813.png)
 
@@ -69,7 +69,7 @@ y_pred = model.predict(X)
 
 The CNN network inputs 128x128 images, however, to maintain the compatibility with *Keras*, the input needs to be reshaped as `X.reshape(1, 128, 128, 1)` for single image or as `X.reshape(-1, 128, 128, 1)` for multiple images.
 
-<!-- Thus produced pixel-wise prediction needs to be further thresholded and decomposed into individual cavities using a DBSCAN clustering algorithm:
+Thus produced pixel-wise prediction needs to be further thresholded and decomposed into individual cavities using a DBSCAN clustering algorithm:
 
 ```python
 import numpy as np
@@ -81,38 +81,7 @@ x, y = y_pred.nonzero()
 data = np.array([x,y]).reshape(2, -1)
 
 clusters = DBSCAN(eps=1.5, min_samples=3).fit(data.T).labels_
-``` -->
-
-<!-- ### Cavity significance estimation
-
-The significance of detected cavities can be estimated using azimuthal and radial count statistics. This can be done by running the `cavity_significance.py` python script ([CIAO](https://cxc.harvard.edu/ciao/) library required). The script takes the following arguments:\
-`galaxy` - string, name of the source (fits file)\
-`scale` - int, scale of the image {1,2,3,4}\
-`cavities` - list, list of cavities to be analyzed\
-`beta_model` - string, beta model to be fitted to radial profile {single, double}, optional (default: single)
-
-Usage: 
-```console
-$ python3 cavity_significance.py galaxy scale cavities (beta_model)
 ```
-Example: 
-```console
-$ python3 cavity_significance.py NGC4649 1 [1,2]
-$ python3 cavity_significance.py NGC4649 1 [1,2] single
-$ python3 cavity_significance.py NGC5813 2 [3,5] double
-```
-
-#### Exemplary output for galaxy NGC4649
-
-![](figures/significance.png)
-
-<!-- ## Example
-
-Here we present an example of the pipeline being used on real *Chandra* images of giant elliptical galaxies. -->
-
-<!-- [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomasplsek/CADET/blob/main/CADET_example_colab.ipynb) -->
-
-<!-- ![](figures/CADET_size.png) -->
 
 ## How to cite (!!!NOT-PUBLISHED YET!!!)
 
