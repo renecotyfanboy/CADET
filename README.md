@@ -85,19 +85,16 @@ clusters = DBSCAN(eps=1.5, min_samples=3).fit(data.T).labels_
 
 ## How to cite (!!!NOT-PUBLISHED YET!!!)
 
-The ***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://ui.adsabs.harvard.edu/abs/2022MNRAS.517.3682P/abstract). If you use the ***CADET***  pipeline in your research, please cite the following paper:
+The ***CADET*** pipeline was originally developed as a part of my [diploma thesis](https://is.muni.cz/th/x68od/?lang=en) and was further described in [Plšek et al. 2023](https://arxiv.org/abs/2304.05457). If you use the ***CADET***  pipeline in your research, please cite the following paper:
 
 ```
-@ARTICLE{2023MNRAS,
-       author = {{Pl{\v{s}}ek}, T. and {Werner}, N. and {Topinka}},
-        title = "{CAvity DEtection Tool (CADET): Pipeline for automatic detection of X-ray cavities in atmospheres of early-type galaxies}",
-      journal = {\mnras},
-         year = 2023,
-       volume = {},
-       number = {},
-        pages = {},
-          doi = {},
-       eprint = {}
+@misc{plšek2023cavity,
+      title={CAvity DEtection Tool (CADET): Pipeline for automatic detection of X-ray cavities in hot galactic and cluster atmospheres}, 
+      author={Tomáš Plšek and Norbert Werner and Martin Topinka and Aurora Simionescu},
+      year={2023},
+      eprint={2304.05457},
+      archivePrefix={arXiv},
+      primaryClass={astro-ph.HE}
 }
 ```
 
